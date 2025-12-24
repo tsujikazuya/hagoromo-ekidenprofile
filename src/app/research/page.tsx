@@ -65,16 +65,16 @@ export default function ResearchPortal() {
     };
 
     return (
-        <div className="container mx-auto p-6 space-y-8 bg-slate-50 min-h-screen">
+        <div className="container mx-auto p-4 md:p-6 space-y-8 bg-slate-50 min-h-screen">
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">貧血研究用データ基盤 (v2.9)</h1>
-                <p className="text-muted-foreground mr-4">
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">貧血研究用データ基盤 (v2.9)</h1>
+                <p className="text-sm md:text-base text-muted-foreground mr-4">
                     Strict CSV Output & Meal Analysis AI Logic (Step 1-4)
                 </p>
             </div>
 
             <Tabs defaultValue="ai-logic" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 h-auto">
                     <TabsTrigger value="ui-design">UI Design</TabsTrigger>
                     <TabsTrigger value="models">Data Models</TabsTrigger>
                     <TabsTrigger value="ai-logic">Meal AI Logic</TabsTrigger>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Calendar, Dumbbell, ClipboardList, Activity, MessageCircle, User, LogOut, Utensils, Bot } from "lucide-react";
+import { Home, Calendar, Dumbbell, ClipboardList, Activity, MessageCircle, User, LogOut, Utensils, Bot, FlaskConical } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,7 @@ export function SideNav() {
         { href: "/condition", icon: Activity, label: "コンディショニング" },
         { href: "/manager", icon: Bot, label: "AI主務" },
         { href: "/messages", icon: MessageCircle, label: "連絡" },
+        { href: "/research", icon: FlaskConical, label: "貧血研究用データ" },
         { href: "/profile", icon: User, label: "マイページ" },
     ];
 
