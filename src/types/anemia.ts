@@ -82,4 +82,9 @@ export interface AnalysisDataRow {
     has_dizziness: 0 | 1;
     has_breathlessness: 0 | 1;
     is_blood_test_day: 0 | 1;
+
+    // Derived Metrics
+    session_load: number | null;
+    rolling_avg_28d_rpe: number | null;
+    dev_rpe: number | null;
 }

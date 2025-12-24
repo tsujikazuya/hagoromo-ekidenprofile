@@ -157,11 +157,8 @@ export function generateAnalysisDataset(
             hr_drift: calculatedHrDrift, // 計算値を使用
 
             // 追加: 自動計算項目
-            // @ts-expect-error adding extra props
             session_load: metrics.session_rpe_load ?? null,
-            // @ts-expect-error adding extra props
             rolling_avg_28d_rpe: metrics.rolling_avg_28d_rpe ? parseFloat(metrics.rolling_avg_28d_rpe.toFixed(2)) : null,
-            // @ts-expect-error adding extra props
             dev_rpe: metrics.deviation_from_28d_rpe ? parseFloat(metrics.deviation_from_28d_rpe.toFixed(2)) : null
         };
 
