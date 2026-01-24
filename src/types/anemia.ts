@@ -55,6 +55,9 @@ export interface DailyLog {
     symptom_dizziness: boolean;
     symptom_breathlessness: boolean;
     symptom_leg_heaviness: boolean;
+    bowel_movement?: 'none' | 'hard' | 'normal' | 'soft';
+    sweat_volume?: 'high' | 'normal' | 'low';
+    hydration_during_practice?: 'high' | 'normal' | 'low';
 }
 
 // For Analysis Export

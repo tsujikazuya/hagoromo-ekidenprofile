@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Activity, Loader2, Check, Video, Upload, CheckCircle, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Save, Activity, Loader2, Check, Video, Upload, CheckCircle, AlertTriangle, Lock, Unlock, UserCog, User } from "lucide-react";
 import Link from "next/link";
 import { useChat } from "@ai-sdk/react";
 import { Bot, Sparkles } from "lucide-react";
@@ -21,6 +21,7 @@ export default function RecordPage() {
     const [trainingType, setTrainingType] = useState<string>("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formAdvice, setFormAdvice] = useState<string>("");
+    const [isCoach, setIsCoach] = useState(false); // Mock role for demo
 
     // Video Analysis State
     const [isUploading, setIsUploading] = useState(false);
@@ -112,13 +113,24 @@ export default function RecordPage() {
 
     return (
         <div className="p-4 space-y-6 pb-24">
-            <header className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/">
-                        <ArrowLeft className="w-6 h-6" />
-                    </Link>
+            <header className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" asChild>
+                        <Link href="/">
+                            <ArrowLeft className="w-6 h-6" />
+                        </Link>
+                    </Button>
+                    <h1 className="text-xl font-bold">練習記録の入力</h1>
+                </div>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsCoach(!isCoach)}
+                    className={`gap-1 text-xs ${isCoach ? 'text-blue-600 bg-blue-50' : 'text-gray-400'}`}
+                >
+                    {isCoach ? <UserCog className="w-4 h-4" /> : <User className="w-4 h-4" />}
+                    {isCoach ? "Coach Mode" : "Athlete Mode"}
                 </Button>
-                <h1 className="text-xl font-bold">練習記録の入力</h1>
             </header>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -457,6 +469,23 @@ export default function RecordPage() {
                         id="comment"
                         placeholder="設定タイム通り走れた。後半少し動きが硬くなった。"
                         className="h-32"
+                    />
+                </div>
+
+                {/* Coach Comment */}
+                <div className="space-y-2 pt-4 border-t border-gray-100">
+                    <div className="flex justify-between items-center">
+                        <Label htmlFor="coach-comment" className="text-blue-800 flex items-center gap-2 font-bold">
+                            監督・コーチからのコメント
+                            {!isCoach && <span className="text-xs font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">選手は閲覧のみ</span>}
+                        </Label>
+                        {isCoach && <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">編集モード</span>}
+                    </div>
+                    <Textarea
+                        id="coach-comment"
+                        placeholder={isCoach ? "選手へのフィードバックを入力..." : "コーチからのコメントがここに表示されます。"}
+                        className={`h-24 transition-colors ${!isCoach ? "bg-gray-50 text-gray-600 cursor-not-allowed" : "bg-blue-50/30 border-blue-200 focus:border-blue-400 focus:ring-blue-200"}`}
+                        disabled={!isCoach}
                     />
                 </div>
 

@@ -38,6 +38,11 @@ export default function ConditionPage() {
     const [fatigue, setFatigue] = useState([3]);
     const [painParts, setPainParts] = useState<string[]>([]);
 
+    // State for Other Conditions
+    const [bowelMovement, setBowelMovement] = useState("");
+    const [sweatVolume, setSweatVolume] = useState("");
+    const [hydration, setHydration] = useState("");
+
     // State for AI Analysis
     const [aiAdvice, setAiAdvice] = useState("");
 
@@ -313,6 +318,49 @@ export default function ConditionPage() {
                                         <Input id="cycleLength" type="number" placeholder="28" />
                                         <span className="absolute right-3 top-2.5 text-sm text-gray-500">日</span>
                                     </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+                                <div className="space-y-2">
+                                    <Label>便通状態</Label>
+                                    <Select value={bowelMovement} onValueChange={setBowelMovement}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="選択" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">無</SelectItem>
+                                            <SelectItem value="hard">硬</SelectItem>
+                                            <SelectItem value="normal">普</SelectItem>
+                                            <SelectItem value="soft">軟</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>発汗量</Label>
+                                    <Select value={sweatVolume} onValueChange={setSweatVolume}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="選択" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="high">多</SelectItem>
+                                            <SelectItem value="normal">普</SelectItem>
+                                            <SelectItem value="low">少</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2 col-span-2">
+                                    <Label>練習時の水分補給</Label>
+                                    <Select value={hydration} onValueChange={setHydration}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="選択に含まれる値" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="high">多</SelectItem>
+                                            <SelectItem value="normal">普</SelectItem>
+                                            <SelectItem value="low">少</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
                             <div className="bg-pink-50 p-3 rounded text-xs text-pink-700">

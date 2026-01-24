@@ -87,7 +87,6 @@ export default function ResearchPortal() {
                         <div className="lg:col-span-4 space-y-4">
                             <h2 className="text-xl font-bold flex items-center gap-2">
                                 1. 選手用 UI
-                                <Badge variant="outline" className="bg-rose-50 text-rose-600 border-rose-200">Mobile View</Badge>
                             </h2>
                             <div className="text-sm text-slate-600 space-y-2">
                                 <p>日常の負担を最小限にするため、タブ切り替えで1画面に統合。</p>
@@ -116,7 +115,6 @@ export default function ResearchPortal() {
                         <div className="lg:col-span-4 space-y-4">
                             <h2 className="text-xl font-bold flex items-center gap-2">
                                 2. スタッフ用 UI
-                                <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">Desktop View</Badge>
                             </h2>
                             <div className="text-sm text-slate-600 space-y-2">
                                 <p>専門的な測定データを月次・不定期で入力するための管理画面。</p>
@@ -150,7 +148,6 @@ export default function ResearchPortal() {
                         <div className="lg:col-span-4 space-y-4">
                             <h3 className="text-lg font-bold flex items-center gap-2">
                                 Input Interface
-                                <Badge variant="outline" className="bg-rose-50 text-rose-600 border-rose-200">Concept</Badge>
                             </h3>
                             <div className="bg-gray-100 p-6 rounded-xl flex justify-center">
                                 <div className="w-full max-w-[350px]">
