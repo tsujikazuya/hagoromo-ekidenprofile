@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Athlete {
+  id              String   @id @default(uuid()) @map("user_id")
+  name            String   @default("Athlete") // Added name field
+  birthDate       DateTime @map("birth_date")
+  historyAnemia   Boolean  @default(false) @map("history_anemia") // 貧血既往歴
+  baselineFerritin Float?  @map("baseline_ferritin")
+
+  bloodTests      BloodTest[]
+  dailyConditions DailyCondition[]
+  trainingLoads   TrainingLoad[]
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("athletes")
+}
+
+model BloodTest {
+  id          String   @id @default(uuid()) @map("test_id")
+  athleteId   String   @map("user_id")
+  date        DateTime
+  
+  hemoglobin  Float    @map("hemoglobin") // Hb (g/dL)
+  ferritin    Float    @map("ferritin")   // ng/mL
+  serumIron   Float?   @map("serum_iron") // Fe (μg/dL)
+  tibc        Float?   @map("tibc")
+  rbc         Float?   @map("rbc")        // 10^4/μL
+  hematocrit  Float?   @map("hematocrit") // %
+  cpk         Int?     @map("cpk")        // U/L
+
+  athlete     Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("blood_tests")
+}
+
+model DailyCondition {
+  id                String   @id @default(uuid()) @map("log_id")
+  athleteId         String   @map("user_id")
+  date              DateTime
+  
+  mensesStatus      Int      @default(0) @map("menses_status") // 0:なし, 1:あり, 2:不正出血
+  restingHeartRate  Int?     @map("resting_hr")   // bpm
+  sleepQuality      Int?     @map("sleep_quality") // 1-5
+  subjectiveFatigue Int?     @map("subjective_fatigue") // 0-100
+  morningWeight     Float?   @map("morning_weight") // kg
+
+  athlete           Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("daily_conditions")
+}
+
+model TrainingLoad {
+  id                String   @id @default(uuid()) @map("load_id")
+  athleteId         String   @map("user_id")
+  date              DateTime
+
+  totalDistance     Float?   @map("total_dist") // km
+  trimp             Float?   @map("trimp")
+  rpeSession        Int?     @map("rpe_session") // 6-20
+
+  athlete           Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("training_loads")
+}
