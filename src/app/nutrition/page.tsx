@@ -11,12 +11,17 @@ import { ArrowLeft, Camera, Utensils, Droplets, Plus, Minus, MessageSquare, Spar
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { useChat } from "@ai-sdk/react";
 import { useEffect } from "react";
 
 export default function NutritionPage() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // 日付と時間のステート
+    const [recordDate, setRecordDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [recordTime, setRecordTime] = useState("");
 
 
     // State for per-meal checks
@@ -114,7 +119,32 @@ export default function NutritionPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
 
-
+                {/* 期日と時間の入力 */}
+                <Card>
+                    <CardContent className="p-4 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="date">期日</Label>
+                                <Input 
+                                    id="date" 
+                                    type="date" 
+                                    value={recordDate} 
+                                    onChange={(e) => setRecordDate(e.target.value)} 
+                                    required 
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="time">時間</Label>
+                                <Input 
+                                    id="time" 
+                                    type="time" 
+                                    value={recordTime} 
+                                    onChange={(e) => setRecordTime(e.target.value)} 
+                                />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
                 <Tabs defaultValue="breakfast" className="w-full">
                     <TabsList className="grid w-full grid-cols-4 mb-4">
                         {meals.map(meal => (

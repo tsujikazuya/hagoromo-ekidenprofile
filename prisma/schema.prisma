@@ -140,6 +140,7 @@ model TrainingMenu {
   type        String   @default("practice") // lsd, jog, pace, interval, etc.
   title       String
   content     String?  // Detailed description / menu
+  time        String?  // 実施時間
   distance    String?
   targetTime  String?
   author      String   @default("coach")

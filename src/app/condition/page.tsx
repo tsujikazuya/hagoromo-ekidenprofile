@@ -19,6 +19,10 @@ export default function ConditionPage() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // 日付と時間のステート
+    const [recordDate, setRecordDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [recordTime, setRecordTime] = useState("");
+
     // State for Vitals
     const [hr, setHr] = useState("");
     const [temp, setTemp] = useState("");
@@ -106,6 +110,33 @@ export default function ConditionPage() {
             </header>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+                {/* 期日と時間の入力 */}
+                <Card>
+                    <CardContent className="p-4 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="date">期日</Label>
+                                <Input 
+                                    id="date" 
+                                    type="date" 
+                                    value={recordDate} 
+                                    onChange={(e) => setRecordDate(e.target.value)} 
+                                    required 
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="time">時間</Label>
+                                <Input 
+                                    id="time" 
+                                    type="time" 
+                                    value={recordTime} 
+                                    onChange={(e) => setRecordTime(e.target.value)} 
+                                />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
                 {/* Vital Signs */}
                 <Card>
                     <CardHeader className="pb-2">

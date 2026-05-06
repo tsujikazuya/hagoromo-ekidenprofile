@@ -21,6 +21,7 @@ export interface TrainingMenu {
     type: string;
     title: string;
     content: string | null;
+    time: string | null;
     distance: string | null;
     targetTime: string | null;
     author: string;
@@ -46,6 +47,7 @@ export function TrainingClient({
     // Form states
     const [newTitle, setNewTitle] = useState("");
     const [newType, setNewType] = useState<string>("practice");
+    const [newTime, setNewTime] = useState("");
     const [newContent, setNewContent] = useState("");
     const [newDistance, setNewDistance] = useState("");
     const [newTargetTime, setNewTargetTime] = useState("");
@@ -54,6 +56,7 @@ export function TrainingClient({
         setEditingMenuId(null);
         setNewTitle("");
         setNewType("practice");
+        setNewTime("");
         setNewContent("");
         setNewDistance("");
         setNewTargetTime("");
@@ -63,6 +66,7 @@ export function TrainingClient({
         setEditingMenuId(menu.id);
         setNewTitle(menu.title);
         setNewType(menu.type);
+        setNewTime(menu.time || "");
         setNewContent(menu.content || "");
         setNewDistance(menu.distance || "");
         setNewTargetTime(menu.targetTime || "");
@@ -79,6 +83,7 @@ export function TrainingClient({
                 date: new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())),
                 title: newTitle,
                 type: newType,
+                time: newTime || undefined,
                 content: newContent || undefined,
                 distance: newDistance || undefined,
                 targetTime: newTargetTime || undefined,
@@ -190,6 +195,10 @@ export function TrainingClient({
                                             </div>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="grid gap-2">
+                                                    <Label htmlFor="time">実施時間</Label>
+                                                    <Input id="time" type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} />
+                                                </div>
+                                                <div className="grid gap-2">
                                                     <Label htmlFor="type">トレーニング種別</Label>
                                                     <Select value={newType} onValueChange={setNewType}>
                                                         <SelectTrigger><SelectValue /></SelectTrigger>
@@ -264,8 +273,15 @@ export function TrainingClient({
                                     </CardHeader>
                                     
                                     <CardContent className="pb-4 px-4 space-y-3">
-                                        {(menu.distance || menu.targetTime) && (
+                                        {(menu.time || menu.distance || menu.targetTime) && (
                                             <div className="p-3 bg-pink-50/50 rounded-lg border border-pink-100/50 flex flex-wrap gap-4 text-sm">
+                                                {menu.time && (
+                                                    <div className="flex items-center gap-2">
+                                                        <Clock className="w-4 h-4 text-pink-600" />
+                                                        <span className="font-bold text-gray-700">開始時間:</span>
+                                                        <span className="font-mono text-pink-700">{menu.time}</span>
+                                                    </div>
+                                                )}
                                                 {menu.distance && (
                                                     <div className="flex items-center gap-2">
                                                         <Tag className="w-4 h-4 text-pink-600" />
