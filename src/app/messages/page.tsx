@@ -27,6 +27,7 @@ export default function MessagesPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     // Form State
     const [newTitle, setNewTitle] = useState("");
@@ -57,8 +58,11 @@ export default function MessagesPage() {
         setIsSubmitting(true);
 
         try {
-            const res = await fetch('/api/notices', {
-                method: 'POST',
+            const url = editingId ? `/api/notices/${editingId}` : '/api/notices';
+            const method = editingId ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     title: newTitle,
@@ -73,6 +77,7 @@ export default function MessagesPage() {
                 setNewTitle("");
                 setNewContent("");
                 setNewType("normal");
+                setEditingId(null);
                 setIsDialogOpen(false);
                 fetchNotices();
             } else {
@@ -86,20 +91,50 @@ export default function MessagesPage() {
         }
     };
 
+    const handleDelete = async (id: string) => {
+        if (!confirm("本当に削除しますか？")) return;
+        try {
+            const res = await fetch(`/api/notices/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                fetchNotices();
+            } else {
+                alert("削除に失敗しました");
+            }
+        } catch (error) {
+            console.error("Error deleting notice:", error);
+            alert("エラーが発生しました");
+        }
+    };
+
+    const openEditDialog = (notice: Notice) => {
+        setEditingId(notice.id);
+        setNewTitle(notice.title);
+        setNewContent(notice.content);
+        setNewAuthor(notice.author);
+        setNewType(notice.type);
+        setIsDialogOpen(true);
+    };
+
+    const openCreateDialog = () => {
+        setEditingId(null);
+        setNewTitle("");
+        setNewContent("");
+        setNewType("normal");
+        setIsDialogOpen(true);
+    };
+
     return (
         <div className="p-4 space-y-6 pb-24">
             <div className="flex items-center justify-between">
                 <h1 className="text-xl font-bold">連絡・お知らせ</h1>
 
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button size="sm" className="bg-pink-600 hover:bg-pink-700 text-white gap-1">
-                            <Plus className="w-4 h-4" /> 新規投稿
-                        </Button>
-                    </DialogTrigger>
+                    <Button size="sm" className="bg-pink-600 hover:bg-pink-700 text-white gap-1" onClick={openCreateDialog}>
+                        <Plus className="w-4 h-4" /> 新規投稿
+                    </Button>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>お知らせを投稿</DialogTitle>
+                            <DialogTitle>{editingId ? "お知らせを編集" : "お知らせを投稿"}</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="space-y-4 py-4">
                             <div className="space-y-2">
@@ -193,6 +228,18 @@ export default function MessagesPage() {
                                 <div className="mt-3 flex gap-4 text-gray-500">
                                     <button className="flex items-center gap-1 text-xs hover:text-gray-900">
                                         <MessageSquare className="w-4 h-4" /> 返信
+                                    </button>
+                                    <button 
+                                        className="flex items-center gap-1 text-xs hover:text-blue-600"
+                                        onClick={() => openEditDialog(notice)}
+                                    >
+                                        編集
+                                    </button>
+                                    <button 
+                                        className="flex items-center gap-1 text-xs hover:text-red-600"
+                                        onClick={() => handleDelete(notice.id)}
+                                    >
+                                        削除
                                     </button>
                                 </div>
                             </CardContent>
