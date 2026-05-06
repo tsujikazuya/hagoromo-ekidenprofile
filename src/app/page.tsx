@@ -1,173 +1,281 @@
-"use client";
-
-import { Card, CardContent } from "@/components/ui/card";
+import { cookies } from 'next/headers';
+import { prisma } from '@/lib/prisma';
+import { redirect } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Utensils, AlertCircle, ChevronRight, Trophy, Zap, Bell } from "lucide-react";
+import { Activity, Utensils, AlertCircle, ChevronRight, Trophy, Zap, Bell, CheckCircle2, MessageSquare, Clock, MapPin, TrendingUp, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { ShareButton } from "@/components/ShareButton";
 
-export default function Home() {
-  // Mock data
-  const todayMenu = {
-    title: "ポイント練習",
-    type: "Interval",
-    details: "400m × 10 (r: 200m)",
-    location: "大学G",
-    time: "16:30",
-  };
+export default async function Home() {
+    // 1. Session Check
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('auth_session');
+    
+    if (!sessionCookie) {
+        redirect('/login');
+    }
 
-  const conditionStatus = {
-    submitted: false,
-  };
+    let session;
+    try {
+        session = JSON.parse(sessionCookie.value);
+    } catch (e) {
+        redirect('/login');
+    }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FFF8F8] via-[#FFFBFB] to-[#F8FAFF] dark:from-black dark:to-zinc-900 pb-32">
-      {/* Compact Header with Glass Effect */}
-      <header className="sticky top-0 z-40 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl px-5 py-3 flex justify-between items-center border-b border-white/20 dark:border-zinc-800 shadow-sm">
-        <div>
-          <h1 className="text-lg font-black tracking-tight text-gray-800 dark:text-white">
-            Hi, <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-400">選手A</span>
-          </h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <ShareButton />
-          <Link href="/profile">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-pink-500 to-orange-400 p-[2px] shadow-lg shadow-pink-500/20">
-              <div className="w-full h-full rounded-full bg-white dark:bg-zinc-900 flex items-center justify-center">
-                <span className="text-xs font-bold text-gray-700 dark:text-gray-200">A</span>
-              </div>
-            </div>
-          </Link>
-        </div>
-      </header>
+    // 2. Fetch User Data
+    const athlete = await prisma.athlete.findUnique({
+        where: { id: session.userId },
+        include: {
+            dailyConditions: {
+                orderBy: { date: 'desc' },
+                take: 1
+            }
+        }
+    });
 
-      {/* Ticker Notification with Gloss */}
-      <div className="bg-gradient-to-r from-pink-50/80 to-white/80 dark:from-pink-900/20 dark:to-zinc-900/20 backdrop-blur-sm px-5 py-2.5 flex items-center gap-3 border-b border-pink-100/50 dark:border-pink-900/30">
-        <div className="bg-pink-100 dark:bg-pink-900/50 p-1 rounded-full">
-          <Bell className="w-3 h-3 text-pink-600 dark:text-pink-400 shrink-0" />
-        </div>
-        <p className="text-xs font-medium text-gray-600 dark:text-gray-300 truncate">
-          <span className="font-bold text-pink-600 dark:text-pink-400 mr-2">NEWS</span>
-          週末の記録会の集合時間が変更になりました (14:00 → 13:30)
-        </p>
-      </div>
+    if (!athlete) {
+        redirect('/login');
+    }
 
-      <div className="px-5 space-y-5 mt-5">
+    // 3. Process Data
+    const todayText = new Date().toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
+    const latestCondition = athlete.dailyConditions[0];
+    
+    let isConditionSubmittedToday = false;
+    if (latestCondition) {
+        const conditionDateText = new Date(latestCondition.date).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
+        if (conditionDateText === todayText) {
+            isConditionSubmittedToday = true;
+        }
+    }
 
-        {/* Compact Hero: Today's Training */}
-        <section>
-          <div className="flex justify-between items-baseline mb-3">
-            <h2 className="text-[10px] font-black text-gray-400 tracking-widest uppercase">TODAY'S MAIN</h2>
-            <Link href="/schedule" className="text-xs font-bold text-pink-500 hover:text-pink-600 transition-colors">
-              週間予定
-            </Link>
-          </div>
+    // 4. Mocks for missing data (Schedule, Meals, Notices, Analysis)
+    const pendingTasks = [];
+    if (!isConditionSubmittedToday) {
+        pendingTasks.push({ type: 'condition', label: '体調未入力', color: 'text-rose-500', bg: 'bg-rose-100', icon: Activity });
+    }
+    // Meal is mock
+    pendingTasks.push({ type: 'meal', label: '朝食未記録', color: 'text-orange-500', bg: 'bg-orange-100', icon: Utensils });
+    // Unread notice mock
+    pendingTasks.push({ type: 'notice', label: '未読の連絡', color: 'text-blue-500', bg: 'bg-blue-100', icon: Bell });
 
-          <Card className="border-0 shadow-xl shadow-pink-500/10 overflow-hidden relative group h-32 rounded-2xl">
-            <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 z-0"></div>
-            {/* Abstract Background Decoration */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl -mr-20 -mt-32"></div>
+    const todaySchedule = {
+        title: "ポイント練習",
+        type: "Interval",
+        details: "400m × 10 (r: 200m)",
+        location: "大学陸上競技場",
+        time: "16:30開始",
+        isChanged: true,
+    };
 
-            <CardContent className="relative z-10 p-5 text-white flex flex-col justify-between h-full">
-              <div className="flex justify-between items-start">
+    const notices = [
+        { id: 1, author: "田中コーチ", title: "週末の記録会について", type: "important", time: "10:00" },
+        { id: 2, author: "システム", title: "新しい分析レポートが届きました", type: "normal", time: "昨日" }
+    ];
+
+    return (
+        <div className="min-h-screen bg-slate-50 dark:bg-zinc-900 pb-32">
+            {/* Header */}
+            <header className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl px-5 py-4 flex justify-between items-center border-b border-slate-200/50 shadow-sm">
                 <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Badge variant="secondary" className="bg-white/10 text-white border-0 text-[10px] px-2 h-5 backdrop-blur-md">
-                      {todayMenu.type}
-                    </Badge>
-                    <span className="text-xs text-gray-300 font-medium tracking-wide">{todayMenu.time} <span className="opacity-50 mx-1">/</span> {todayMenu.location}</span>
-                  </div>
-                  <h3 className="text-xl font-black leading-none tracking-tight">{todayMenu.title}</h3>
-                  <p className="text-white/60 font-mono text-xs mt-1">{todayMenu.details}</p>
+                    <h1 className="text-xl font-black tracking-tight text-slate-800 dark:text-white">
+                        Hi, <span className="text-pink-600">{athlete.name}</span> 選手
+                    </h1>
+                    <p className="text-xs text-slate-500 font-medium">{todayText}</p>
                 </div>
-                <Button size="sm" className="h-9 w-9 p-0 rounded-full bg-white text-black hover:bg-gray-200 shadow-lg shadow-white/10" asChild>
-                  <Link href="/record">
-                    <ChevronRight className="w-5 h-5 ml-0.5" />
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
+                <div className="flex items-center gap-3">
+                    <ShareButton />
+                    <Link href="/profile">
+                        <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
+                            <span className="text-sm font-bold text-slate-600">{athlete.name[0]}</span>
+                        </div>
+                    </Link>
+                </div>
+            </header>
 
-        {/* Unified 2x2 Cockpit Grid */}
-        <section>
-          <h2 className="text-[10px] font-black text-gray-400 tracking-widest uppercase mb-3">QUICK ACCESS</h2>
-          <div className="grid grid-cols-2 gap-3">
+            <main className="px-4 mt-6 space-y-6">
+                
+                {/* Section 1: Pending Tasks (未対応項目) */}
+                {pendingTasks.length > 0 && (
+                    <section>
+                        <h2 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3 flex items-center gap-1.5">
+                            <AlertCircle className="w-4 h-4 text-rose-500" />
+                            未対応タスク
+                        </h2>
+                        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                            {pendingTasks.map((task, i) => {
+                                const Icon = task.icon;
+                                return (
+                                    <div key={i} className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200/60 shadow-sm bg-white`}>
+                                        <div className={`p-1.5 rounded-full ${task.bg} ${task.color}`}>
+                                            <Icon className="w-4 h-4" />
+                                        </div>
+                                        <span className={`text-sm font-bold text-slate-700`}>{task.label}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+                )}
 
-            {/* 1. Condition */}
-            <Link href="/condition" className="block group">
-              <div className="glass-panel p-4 rounded-2xl relative h-28 flex flex-col justify-between transition-transform transform group-hover:scale-[1.02] duration-300">
-                <div className="flex justify-between items-start">
-                  <div className="p-2 bg-blue-50/80 dark:bg-blue-900/30 rounded-xl text-blue-500">
-                    <Activity className="w-5 h-5" />
-                  </div>
-                  {!conditionStatus.submitted && (
-                    <span className="flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">体調チェック</h3>
-                  <p className={`text-[10px] font-bold mt-0.5 ${conditionStatus.submitted ? 'text-green-500' : 'text-red-500'}`}>
-                    {conditionStatus.submitted ? '提出済' : '未提出'}
-                  </p>
-                </div>
-              </div>
-            </Link>
+                {/* Section 2: Today's Practice (今日の練習) */}
+                <section>
+                    <h2 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3">Today's Schedule</h2>
+                    <Card className="border-0 shadow-sm overflow-hidden bg-white">
+                        <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 to-indigo-500" />
+                        <CardContent className="p-5">
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-50 border-0 text-xs font-bold px-2 py-0.5">
+                                            {todaySchedule.type}
+                                        </Badge>
+                                        {todaySchedule.isChanged && (
+                                            <span className="flex items-center gap-1 text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
+                                                <AlertTriangle className="w-3 h-3" />
+                                                時間変更あり
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h3 className="text-xl font-black text-slate-800">{todaySchedule.title}</h3>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-slate-50 p-3 rounded-lg space-y-2 mb-4 border border-slate-100">
+                                <p className="text-sm font-medium text-slate-700 leading-snug">{todaySchedule.details}</p>
+                            </div>
 
-            {/* 2. Nutrition */}
-            <Link href="/nutrition" className="block group">
-              <div className="glass-panel p-4 rounded-2xl relative h-28 flex flex-col justify-between transition-transform transform group-hover:scale-[1.02] duration-300">
-                <div className="flex justify-between items-start">
-                  <div className="p-2 bg-orange-50/80 dark:bg-orange-900/30 rounded-xl text-orange-500">
-                    <Utensils className="w-5 h-5" />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">食事管理</h3>
-                  <p className="text-[10px] text-gray-400 mt-0.5">朝・昼 記録済</p>
-                </div>
-              </div>
-            </Link>
+                            <div className="flex items-center gap-4 text-sm text-slate-500 font-medium">
+                                <div className="flex items-center gap-1.5">
+                                    <Clock className="w-4 h-4 text-blue-500" />
+                                    {todaySchedule.time}
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <MapPin className="w-4 h-4 text-emerald-500" />
+                                    {todaySchedule.location}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </section>
 
-            {/* 3. Analysis */}
-            <Link href="/analysis" className="block group">
-              <div className="glass-panel p-4 rounded-2xl relative h-28 flex flex-col justify-between overflow-hidden transition-transform transform group-hover:scale-[1.02] duration-300">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-500/5 rounded-full -mr-8 -mt-8"></div>
-                <div className="flex justify-between items-start relative z-10">
-                  <div className="p-2 bg-indigo-50/80 dark:bg-indigo-900/30 rounded-xl text-indigo-500">
-                    <Trophy className="w-5 h-5" />
-                  </div>
-                </div>
-                <div className="relative z-10">
-                  <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">データ分析</h3>
-                  <p className="text-[10px] text-indigo-500 font-medium mt-0.5">Performance</p>
-                </div>
-              </div>
-            </Link>
+                {/* Section 3: Today's Condition Summary */}
+                <section>
+                    <div className="flex justify-between items-center mb-3">
+                        <h2 className="text-xs font-bold text-slate-500 tracking-wider uppercase">Condition Summary</h2>
+                        <Link href="/condition" className="text-xs font-bold text-pink-600 hover:text-pink-700 flex items-center">
+                            入力・詳細 <ChevronRight className="w-3 h-3 ml-0.5" />
+                        </Link>
+                    </div>
+                    {isConditionSubmittedToday && latestCondition ? (
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 text-center">
+                                <p className="text-[10px] text-slate-400 font-bold mb-1">睡眠の質</p>
+                                <p className="text-lg font-black text-slate-800">{latestCondition.sleepQuality || '-'}<span className="text-xs text-slate-400 font-normal ml-0.5">/5</span></p>
+                            </div>
+                            <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 text-center">
+                                <p className="text-[10px] text-slate-400 font-bold mb-1">主観的疲労</p>
+                                <p className={`text-lg font-black ${latestCondition.subjectiveFatigue && latestCondition.subjectiveFatigue > 60 ? 'text-orange-500' : 'text-slate-800'}`}>
+                                    {latestCondition.subjectiveFatigue || '-'}
+                                </p>
+                            </div>
+                            <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 text-center">
+                                <p className="text-[10px] text-slate-400 font-bold mb-1">痛み・違和感</p>
+                                <p className="text-sm font-black text-emerald-500 mt-1">なし</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-white rounded-xl shadow-sm border border-rose-100 p-6 text-center">
+                            <Activity className="w-8 h-8 text-rose-200 mx-auto mb-2" />
+                            <p className="text-sm font-bold text-slate-600 mb-3">本日のコンディションが未入力です</p>
+                            <Button asChild className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold shadow-sm">
+                                <Link href="/condition">今すぐ入力する</Link>
+                            </Button>
+                        </div>
+                    )}
+                </section>
 
-            {/* 4. Video AI */}
-            <Link href="/video" className="block group">
-              <div className="glass-panel p-4 rounded-2xl relative h-28 flex flex-col justify-between overflow-hidden transition-transform transform group-hover:scale-[1.02] duration-300">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-pink-500/5 rounded-full -mr-8 -mt-8"></div>
-                <div className="flex justify-between items-start relative z-10">
-                  <div className="p-2 bg-pink-50/80 dark:bg-pink-900/30 rounded-xl text-pink-500">
-                    <Zap className="w-5 h-5" />
-                  </div>
-                </div>
-                <div className="relative z-10">
-                  <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">AI動画分析</h3>
-                  <p className="text-[10px] text-pink-500 font-medium mt-0.5">Form Check</p>
-                </div>
-              </div>
-            </Link>
-          </div>
-        </section>
-      </div>
-    </div>
-  );
+                {/* Section 4: Messages & Notices */}
+                <section>
+                    <h2 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3 flex items-center gap-1.5">
+                        <MessageSquare className="w-4 h-4 text-blue-500" />
+                        指導者からの連絡
+                    </h2>
+                    <div className="space-y-3">
+                        {notices.map((notice) => (
+                            <Link href="#" key={notice.id} className="block">
+                                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-start gap-3 hover:border-blue-200 transition-colors">
+                                    <div className={`p-2 rounded-full mt-0.5 ${notice.type === 'important' ? 'bg-rose-100 text-rose-500' : 'bg-slate-100 text-slate-500'}`}>
+                                        <Bell className="w-4 h-4" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-[10px] font-bold text-slate-400">{notice.author}</span>
+                                            <span className="text-[10px] text-slate-400">{notice.time}</span>
+                                        </div>
+                                        <p className="text-sm font-bold text-slate-800 leading-snug">{notice.title}</p>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </section>
+
+                {/* Section 5: Analysis Topics */}
+                <section>
+                    <h2 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3 flex items-center gap-1.5">
+                        <TrendingUp className="w-4 h-4 text-indigo-500" />
+                        分析・フィードバック
+                    </h2>
+                    <Card className="border-0 shadow-sm bg-gradient-to-br from-indigo-50 to-white">
+                        <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                                <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600 mt-1">
+                                    <Zap className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <Badge variant="outline" className="text-[10px] border-indigo-200 text-indigo-600 mb-1.5 bg-white">
+                                        AIフォーム分析
+                                    </Badge>
+                                    <h3 className="font-bold text-sm text-slate-800 mb-1">接地時の膝の角度に改善傾向</h3>
+                                    <p className="text-xs text-slate-600 leading-relaxed">
+                                        先週の走行データと比較して、接地時のストライドと膝のクッション性が向上しています。引き続き股関節の柔軟性メニューを継続してください。
+                                    </p>
+                                    <Link href="/video" className="inline-flex items-center text-xs font-bold text-indigo-600 mt-2 hover:underline">
+                                        詳細レポートを見る <ChevronRight className="w-3 h-3 ml-0.5" />
+                                    </Link>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </section>
+
+                {/* Section 6: Quick Access */}
+                <section className="pt-2">
+                    <h2 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3">Quick Access</h2>
+                    <div className="grid grid-cols-2 gap-3">
+                        <Link href="/nutrition">
+                            <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3 active:scale-95 transition-transform">
+                                <div className="bg-orange-50 p-2 rounded-lg text-orange-500">
+                                    <Utensils className="w-4 h-4" />
+                                </div>
+                                <span className="text-sm font-bold text-slate-700">食事管理</span>
+                            </div>
+                        </Link>
+                        <Link href="/analysis">
+                            <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3 active:scale-95 transition-transform">
+                                <div className="bg-emerald-50 p-2 rounded-lg text-emerald-500">
+                                    <Trophy className="w-4 h-4" />
+                                </div>
+                                <span className="text-sm font-bold text-slate-700">データ分析</span>
+                            </div>
+                        </Link>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    );
 }
