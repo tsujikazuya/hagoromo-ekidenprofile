@@ -18,8 +18,13 @@ export async function loginAction(formData: FormData) {
 
     let redirectUrl = ''
     try {
-        const user = await prisma.athlete.findUnique({
-            where: { loginId: normalizedId }
+        const user = await prisma.athlete.findFirst({
+            where: { 
+                loginId: {
+                    equals: normalizedId,
+                    mode: 'insensitive'
+                }
+            }
         })
 
         if (!user || user.password !== encodePassword(password)) {
@@ -72,8 +77,13 @@ export async function signUpAction(formData: FormData) {
     let redirectUrl = ''
     try {
         // 重複チェック
-        const existing = await prisma.athlete.findUnique({
-            where: { loginId: normalizedId }
+        const existing = await prisma.athlete.findFirst({
+            where: { 
+                loginId: {
+                    equals: normalizedId,
+                    mode: 'insensitive'
+                }
+            }
         })
 
         if (existing) {
