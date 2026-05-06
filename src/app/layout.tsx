@@ -3,6 +3,7 @@ import "./globals.css";
 import { BottomNav } from "@/components/BottomNav";
 import { SideNav } from "@/components/SideNav";
 import { Inter, Noto_Sans_JP } from "next/font/google";
+import { cookies } from "next/headers";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const notoSansJP = Noto_Sans_JP({
@@ -54,15 +55,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("auth_session");
+  let role = "player";
+  if (sessionCookie) {
+    try {
+      const session = JSON.parse(sessionCookie.value);
+      role = session.role || "player";
+    } catch (e) {}
+  }
+
   return (
     <html lang="ja">
       <body className={`${inter.variable} ${notoSansJP.variable} font-sans antialiased`}>
-        <SideNav />
+        <SideNav role={role} />
         <main className="pb-20 md:pb-0 md:pl-64 min-h-screen bg-gray-50 dark:bg-black transition-all">
           {children}
         </main>

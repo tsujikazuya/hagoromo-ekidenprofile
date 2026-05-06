@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/app/auth/actions";
 
-export function SideNav() {
+export function SideNav({ role = "player" }: { role?: string }) {
     const pathname = usePathname();
 
     // Hide on login page and coach pages
@@ -23,9 +23,12 @@ export function SideNav() {
         { href: "/manager", icon: Bot, label: "AI主務" },
         { href: "/messages", icon: MessageCircle, label: "連絡" },
         { href: "/research", icon: FlaskConical, label: "貧血研究用データ" },
-        { href: "/staff", icon: Activity, label: "指導者ダッシュボード" },
         { href: "/profile", icon: User, label: "マイページ" },
     ];
+
+    if (role === "coach") {
+        navItems.splice(navItems.length - 1, 0, { href: "/staff", icon: Activity, label: "指導者ダッシュボード" });
+    }
 
     return (
         <aside className="hidden md:flex flex-col w-64 fixed left-0 top-0 bottom-0 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl border-r border-white/40 dark:border-zinc-800 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">

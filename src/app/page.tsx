@@ -51,29 +51,31 @@ export default async function Home() {
         }
     }
 
-    // 4. Mocks for missing data (Schedule, Meals, Notices, Analysis)
+    // 4. Fetch Schedule & Notices
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const todaySchedule = await prisma.schedule.findFirst({
+        where: {
+            date: {
+                gte: todayStart,
+                lte: todayEnd,
+            }
+        }
+    });
+
+    const notices = await prisma.notice.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 3
+    });
+
     const pendingTasks = [];
     if (!isConditionSubmittedToday) {
         pendingTasks.push({ type: 'condition', label: '体調未入力', color: 'text-rose-500', bg: 'bg-rose-100', icon: Activity });
     }
-    // Meal is mock
-    pendingTasks.push({ type: 'meal', label: '朝食未記録', color: 'text-orange-500', bg: 'bg-orange-100', icon: Utensils });
-    // Unread notice mock
-    pendingTasks.push({ type: 'notice', label: '未読の連絡', color: 'text-blue-500', bg: 'bg-blue-100', icon: Bell });
 
-    const todaySchedule = {
-        title: "ポイント練習",
-        type: "Interval",
-        details: "400m × 10 (r: 200m)",
-        location: "大学陸上競技場",
-        time: "16:30開始",
-        isChanged: true,
-    };
-
-    const notices = [
-        { id: 1, author: "田中コーチ", title: "週末の記録会について", type: "important", time: "10:00" },
-        { id: 2, author: "システム", title: "新しい分析レポートが届きました", type: "normal", time: "昨日" }
-    ];
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-zinc-900 pb-32">
@@ -126,37 +128,45 @@ export default async function Home() {
                     <Card className="border-0 shadow-sm overflow-hidden bg-white">
                         <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 to-indigo-500" />
                         <CardContent className="p-5">
-                            <div className="flex justify-between items-start mb-4">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1.5">
-                                        <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-50 border-0 text-xs font-bold px-2 py-0.5">
-                                            {todaySchedule.type}
-                                        </Badge>
-                                        {todaySchedule.isChanged && (
-                                            <span className="flex items-center gap-1 text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
-                                                <AlertTriangle className="w-3 h-3" />
-                                                時間変更あり
-                                            </span>
+                            {todaySchedule ? (
+                                <>
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1.5">
+                                                <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-50 border-0 text-xs font-bold px-2 py-0.5">
+                                                    {todaySchedule.type}
+                                                </Badge>
+                                            </div>
+                                            <h3 className="text-xl font-black text-slate-800">{todaySchedule.title}</h3>
+                                        </div>
+                                    </div>
+                                    
+                                    {todaySchedule.description && (
+                                        <div className="bg-slate-50 p-3 rounded-lg space-y-2 mb-4 border border-slate-100">
+                                            <p className="text-sm font-medium text-slate-700 leading-snug">{todaySchedule.description}</p>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-4 text-sm text-slate-500 font-medium">
+                                        {todaySchedule.time && (
+                                            <div className="flex items-center gap-1.5">
+                                                <Clock className="w-4 h-4 text-blue-500" />
+                                                {todaySchedule.time}
+                                            </div>
+                                        )}
+                                        {todaySchedule.location && (
+                                            <div className="flex items-center gap-1.5">
+                                                <MapPin className="w-4 h-4 text-emerald-500" />
+                                                {todaySchedule.location}
+                                            </div>
                                         )}
                                     </div>
-                                    <h3 className="text-xl font-black text-slate-800">{todaySchedule.title}</h3>
+                                </>
+                            ) : (
+                                <div className="text-center py-4">
+                                    <p className="text-sm font-bold text-slate-500">本日の練習予定は登録されていません</p>
                                 </div>
-                            </div>
-                            
-                            <div className="bg-slate-50 p-3 rounded-lg space-y-2 mb-4 border border-slate-100">
-                                <p className="text-sm font-medium text-slate-700 leading-snug">{todaySchedule.details}</p>
-                            </div>
-
-                            <div className="flex items-center gap-4 text-sm text-slate-500 font-medium">
-                                <div className="flex items-center gap-1.5">
-                                    <Clock className="w-4 h-4 text-blue-500" />
-                                    {todaySchedule.time}
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <MapPin className="w-4 h-4 text-emerald-500" />
-                                    {todaySchedule.location}
-                                </div>
-                            </div>
+                            )}
                         </CardContent>
                     </Card>
                 </section>
@@ -204,7 +214,7 @@ export default async function Home() {
                         指導者からの連絡
                     </h2>
                     <div className="space-y-3">
-                        {notices.map((notice) => (
+                        {notices.length > 0 ? notices.map((notice) => (
                             <Link href="#" key={notice.id} className="block">
                                 <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-start gap-3 hover:border-blue-200 transition-colors">
                                     <div className={`p-2 rounded-full mt-0.5 ${notice.type === 'important' ? 'bg-rose-100 text-rose-500' : 'bg-slate-100 text-slate-500'}`}>
@@ -213,43 +223,20 @@ export default async function Home() {
                                     <div className="flex-1">
                                         <div className="flex items-center justify-between mb-1">
                                             <span className="text-[10px] font-bold text-slate-400">{notice.author}</span>
-                                            <span className="text-[10px] text-slate-400">{notice.time}</span>
+                                            <span className="text-[10px] text-slate-400">
+                                                {new Date(notice.createdAt).toLocaleDateString('ja-JP')}
+                                            </span>
                                         </div>
                                         <p className="text-sm font-bold text-slate-800 leading-snug">{notice.title}</p>
                                     </div>
                                 </div>
                             </Link>
-                        ))}
-                    </div>
-                </section>
-
-                {/* Section 5: Analysis Topics */}
-                <section>
-                    <h2 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3 flex items-center gap-1.5">
-                        <TrendingUp className="w-4 h-4 text-indigo-500" />
-                        分析・フィードバック
-                    </h2>
-                    <Card className="border-0 shadow-sm bg-gradient-to-br from-indigo-50 to-white">
-                        <CardContent className="p-4">
-                            <div className="flex items-start gap-3">
-                                <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600 mt-1">
-                                    <Zap className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <Badge variant="outline" className="text-[10px] border-indigo-200 text-indigo-600 mb-1.5 bg-white">
-                                        AIフォーム分析
-                                    </Badge>
-                                    <h3 className="font-bold text-sm text-slate-800 mb-1">接地時の膝の角度に改善傾向</h3>
-                                    <p className="text-xs text-slate-600 leading-relaxed">
-                                        先週の走行データと比較して、接地時のストライドと膝のクッション性が向上しています。引き続き股関節の柔軟性メニューを継続してください。
-                                    </p>
-                                    <Link href="/video" className="inline-flex items-center text-xs font-bold text-indigo-600 mt-2 hover:underline">
-                                        詳細レポートを見る <ChevronRight className="w-3 h-3 ml-0.5" />
-                                    </Link>
-                                </div>
+                        )) : (
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 text-center">
+                                <p className="text-sm font-bold text-slate-500">新しい連絡はありません</p>
                             </div>
-                        </CardContent>
-                    </Card>
+                        )}
+                    </div>
                 </section>
 
                 {/* Section 6: Quick Access */}
