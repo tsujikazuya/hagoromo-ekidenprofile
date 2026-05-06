@@ -18,7 +18,42 @@ import { Progress } from "@/components/ui/progress";
 export default function RecordPage() {
     const router = useRouter();
     const [rpe, setRpe] = useState([5]);
-    const [trainingType, setTrainingType] = useState<string>("");
+
+    interface TrainingBlock {
+        id: string;
+        type: string;
+        distance?: string;
+        targetTime?: string;
+        recoveryDist?: string;
+        recoveryTime?: string;
+        reps?: string;
+        sets?: string;
+        endPace?: string;
+        otherMenu?: string;
+    }
+
+    const [trainingBlocks, setTrainingBlocks] = useState<TrainingBlock[]>([
+        { id: '1', type: '' }
+    ]);
+    
+    const updateBlock = (id: string, field: keyof TrainingBlock, value: string) => {
+        setTrainingBlocks(prev => prev.map(block => 
+            block.id === id ? { ...block, [field]: value } : block
+        ));
+    };
+
+    const addBlock = () => {
+        setTrainingBlocks(prev => [
+            ...prev,
+            { id: Date.now().toString(), type: '' }
+        ]);
+    };
+
+    const removeBlock = (id: string) => {
+        if (trainingBlocks.length > 1) {
+            setTrainingBlocks(prev => prev.filter(block => block.id !== id));
+        }
+    };
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isCoach, setIsCoach] = useState(false); // Mock role for demo
     const [formAdvice, setFormAdvice] = useState<string>("");
@@ -117,6 +152,19 @@ export default function RecordPage() {
             // @ts-ignore
             const feedbackComment = e.target.comment.value;
 
+            const blocksDetail = trainingBlocks.map((b, index) => {
+                let detail = `[${index + 1}. ${b.type || '未選択'}]\n`;
+                if (b.distance) detail += `  距離: ${b.distance}\n`;
+                if (b.targetTime) detail += `  設定タイム: ${b.targetTime}\n`;
+                if (b.reps) detail += `  回数: ${b.reps}本 x ${b.sets || 1}セット\n`;
+                if (b.recoveryDist || b.recoveryTime) detail += `  リカバリー: ${b.recoveryDist || ''} ${b.recoveryTime || ''}\n`;
+                if (b.endPace) detail += `  終了ペース: ${b.endPace}\n`;
+                if (b.otherMenu) detail += `  詳細: ${b.otherMenu}\n`;
+                return detail;
+            }).join('\n');
+
+            const fullFeedback = `【トレーニング内容詳細】\n${blocksDetail}\n\n【振り返り・コメント】\n${feedbackComment}`;
+
             const combinedDate = new Date(`${recordDate}T${recordTime || '00:00'}:00`);
 
             const res = await fetch('/api/training-loads', {
@@ -126,7 +174,7 @@ export default function RecordPage() {
                     date: combinedDate,
                     totalDistance: distance,
                     rpeSession: rpe[0],
-                    feedback: feedbackComment,
+                    feedback: fullFeedback,
                 }),
             });
 
@@ -199,105 +247,127 @@ export default function RecordPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-lg font-bold">トレーニング内容</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="trainingType">トレーニング種別</Label>
-                            <Select onValueChange={setTrainingType}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="種別を選択" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="lsd">LSD</SelectItem>
-                                    <SelectItem value="jog">ジョグ</SelectItem>
-                                    <SelectItem value="pace">ペース走</SelectItem>
-                                    <SelectItem value="tempo">テンポ走（LT走）</SelectItem>
-                                    <SelectItem value="interval">インターバル</SelectItem>
-                                    <SelectItem value="buildup">ビルドアップ走</SelectItem>
-                                    <SelectItem value="repetition">レペティション（レースペース走）</SelectItem>
-                                    <SelectItem value="hill">坂道トレーニング</SelectItem>
-                                    <SelectItem value="weight_all">ウェイトトレーニング（全体）</SelectItem>
-                                    <SelectItem value="weight_ind">ウェイトトレーニング（個別）</SelectItem>
-                                    <SelectItem value="drill">技術・ドリル</SelectItem>
-                                    <SelectItem value="sprint">スプリント／流し</SelectItem>
-                                    <SelectItem value="cross">クロストレーニング</SelectItem>
-                                    <SelectItem value="trail">トレイルランニング</SelectItem>
-                                    <SelectItem value="recovery">回復系セッション</SelectItem>
-                                    <SelectItem value="mental">メンタル・戦術トレーニング</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {/* Dynamic Form Fields based on trainingType */}
-                        {(trainingType === 'interval' || trainingType === 'repetition' || trainingType === 'hill' || trainingType === 'sprint') ? (
-                            // Interval / Repetition Mode
-                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="menuDistance">疾走距離</Label>
-                                        <Input id="menuDistance" placeholder="例: 400m, 1000m" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="targetTime">疾走設定タイム</Label>
-                                        <Input id="targetTime" placeholder="例: 72秒, 3:20/km" />
-                                    </div>
-                                </div>
+                    <CardContent className="space-y-6">
+                        {trainingBlocks.map((block, index) => (
+                            <div key={block.id} className="p-4 bg-slate-50 border border-slate-100 rounded-xl space-y-4 relative">
+                                {trainingBlocks.length > 1 && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="absolute top-2 right-2 text-rose-500 hover:bg-rose-50"
+                                        onClick={() => removeBlock(block.id)}
+                                    >
+                                        削除
+                                    </Button>
+                                )}
+                                
                                 <div className="space-y-2">
-                                    <Label htmlFor="recovery">リカバリー</Label>
-                                    <div className="flex gap-2">
-                                        <Input id="recoveryDist" placeholder="距離 (Example: 200m)" />
-                                        <Input id="recoveryTime" placeholder="時間 (Example: 90秒)" />
-                                    </div>
+                                    <Label>トレーニング種別 {index + 1}</Label>
+                                    <Select value={block.type} onValueChange={(val) => updateBlock(block.id, 'type', val)}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="種別を選択" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="lsd">LSD</SelectItem>
+                                            <SelectItem value="jog">ジョグ</SelectItem>
+                                            <SelectItem value="pace">ペース走</SelectItem>
+                                            <SelectItem value="tempo">テンポ走（LT走）</SelectItem>
+                                            <SelectItem value="interval">インターバル</SelectItem>
+                                            <SelectItem value="buildup">ビルドアップ走</SelectItem>
+                                            <SelectItem value="repetition">レペティション（レースペース走）</SelectItem>
+                                            <SelectItem value="hill">坂道トレーニング</SelectItem>
+                                            <SelectItem value="weight_all">ウェイトトレーニング（全体）</SelectItem>
+                                            <SelectItem value="weight_ind">ウェイトトレーニング（個別）</SelectItem>
+                                            <SelectItem value="drill">技術・ドリル</SelectItem>
+                                            <SelectItem value="sprint">スプリント／流し</SelectItem>
+                                            <SelectItem value="cross">クロストレーニング</SelectItem>
+                                            <SelectItem value="trail">トレイルランニング</SelectItem>
+                                            <SelectItem value="recovery">回復系セッション</SelectItem>
+                                            <SelectItem value="mental">メンタル・戦術トレーニング</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="reps">回数</Label>
-                                        <div className="relative">
-                                            <Input id="reps" type="number" placeholder="10" />
-                                            <span className="absolute right-3 top-2.5 text-sm text-gray-500">本</span>
+
+                                {/* Dynamic Form Fields based on trainingType */}
+                                {(block.type === 'interval' || block.type === 'repetition' || block.type === 'hill' || block.type === 'sprint') ? (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label>疾走距離</Label>
+                                                <Input placeholder="例: 400m, 1000m" value={block.distance || ''} onChange={(e) => updateBlock(block.id, 'distance', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>疾走設定タイム</Label>
+                                                <Input placeholder="例: 72秒, 3:20/km" value={block.targetTime || ''} onChange={(e) => updateBlock(block.id, 'targetTime', e.target.value)} />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>リカバリー</Label>
+                                            <div className="flex gap-2">
+                                                <Input placeholder="距離 (例: 200m)" value={block.recoveryDist || ''} onChange={(e) => updateBlock(block.id, 'recoveryDist', e.target.value)} />
+                                                <Input placeholder="時間 (例: 90秒)" value={block.recoveryTime || ''} onChange={(e) => updateBlock(block.id, 'recoveryTime', e.target.value)} />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label>回数</Label>
+                                                <div className="relative">
+                                                    <Input type="number" placeholder="10" value={block.reps || ''} onChange={(e) => updateBlock(block.id, 'reps', e.target.value)} />
+                                                    <span className="absolute right-3 top-2.5 text-sm text-gray-500">本</span>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>セット数</Label>
+                                                <div className="relative">
+                                                    <Input type="number" placeholder="1" value={block.sets || ''} onChange={(e) => updateBlock(block.id, 'sets', e.target.value)} />
+                                                    <span className="absolute right-3 top-2.5 text-sm text-gray-500">セット</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="sets">セット数</Label>
-                                        <div className="relative">
-                                            <Input id="sets" type="number" placeholder="1" />
-                                            <span className="absolute right-3 top-2.5 text-sm text-gray-500">セット</span>
+                                ) : (block.type === 'weight_all' || block.type === 'weight_ind' || block.type === 'drill' || block.type === 'mental') ? (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                                        <p className="text-sm text-gray-500">
+                                            詳細な内容は下の「その他・詳細」欄に記入してください。
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label>設定距離</Label>
+                                                <Input placeholder="例: 10km, 60分" value={block.distance || ''} onChange={(e) => updateBlock(block.id, 'distance', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>設定ペース</Label>
+                                                <Input placeholder="例: 4:30/km" value={block.targetTime || ''} onChange={(e) => updateBlock(block.id, 'targetTime', e.target.value)} />
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (trainingType === 'weight_all' || trainingType === 'weight_ind' || trainingType === 'drill' || trainingType === 'mental') ? (
-                            // Weight / Drill / Other Mode
-                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                                <p className="text-sm text-gray-500">
-                                    詳細な内容は下の「その他・詳細」欄に記入してください。
-                                </p>
-                            </div>
-                        ) : (
-                            // Distance / Pace Mode (Default)
-                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="menuDistance">設定距離</Label>
-                                        <Input id="menuDistance" placeholder="例: 10km, 60分" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="targetTime">設定ペース</Label>
-                                        <Input id="targetTime" placeholder="例: 4:30/km" />
-                                    </div>
-                                </div>
-                                {trainingType === 'buildup' && (
-                                    <div className="space-y-2">
-                                        <Label htmlFor="endPace">終了設定ペース</Label>
-                                        <Input id="endPace" placeholder="例: 3:45/km" />
+                                        {block.type === 'buildup' && (
+                                            <div className="space-y-2">
+                                                <Label>終了設定ペース</Label>
+                                                <Input placeholder="例: 3:45/km" value={block.endPace || ''} onChange={(e) => updateBlock(block.id, 'endPace', e.target.value)} />
+                                            </div>
+                                        )}
                                     </div>
                                 )}
-                            </div>
-                        )}
 
-                        <div className="space-y-2">
-                            <Label htmlFor="otherMenu">その他・詳細</Label>
-                            <Input id="otherMenu" placeholder="例: r: 200m jog, 傾斜3%, 後半ビルドアップ" />
-                        </div>
+                                <div className="space-y-2">
+                                    <Label>その他・詳細</Label>
+                                    <Input placeholder="例: r: 200m jog, 傾斜3%" value={block.otherMenu || ''} onChange={(e) => updateBlock(block.id, 'otherMenu', e.target.value)} />
+                                </div>
+                            </div>
+                        ))}
+                        
+                        <Button 
+                            type="button" 
+                            variant="outline" 
+                            className="w-full border-dashed border-2 text-pink-600 hover:bg-pink-50"
+                            onClick={addBlock}
+                        >
+                            + トレーニング種別を追加
+                        </Button>
                     </CardContent>
                 </Card>
 
