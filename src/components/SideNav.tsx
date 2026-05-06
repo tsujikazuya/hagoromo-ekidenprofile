@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { logoutAction } from "@/app/auth/actions";
 
 export function SideNav() {
     const pathname = usePathname();
@@ -15,13 +16,14 @@ export function SideNav() {
     const navItems = [
         { href: "/", icon: Home, label: "ホーム" },
         { href: "/schedule", icon: Calendar, label: "スケジュール" },
-        // { href: "/training", icon: Dumbbell, label: "トレーニング内容" }, // Consolidated into Record
+        { href: "/training", icon: Dumbbell, label: "トレーニング内容" },
         { href: "/record", icon: ClipboardList, label: "トレーニング記録" },
         { href: "/nutrition", icon: Utensils, label: "食事記録" },
         { href: "/condition", icon: Activity, label: "コンディショニング" },
         { href: "/manager", icon: Bot, label: "AI主務" },
         { href: "/messages", icon: MessageCircle, label: "連絡" },
         { href: "/research", icon: FlaskConical, label: "貧血研究用データ" },
+        { href: "/staff", icon: Activity, label: "指導者ダッシュボード" },
         { href: "/profile", icon: User, label: "マイページ" },
     ];
 
@@ -56,12 +58,12 @@ export function SideNav() {
             </nav>
 
             <div className="p-4 border-t border-gray-100/50">
-                <Button variant="ghost" className="w-full justify-start text-gray-500 hover:text-red-500 hover:bg-red-50/50 gap-2" asChild>
-                    <Link href="/login">
+                <form action={logoutAction} className="w-full">
+                    <Button variant="ghost" type="submit" className="w-full justify-start text-gray-500 hover:text-red-500 hover:bg-red-50/50 gap-2">
                         <LogOut className="w-4 h-4" />
                         ログアウト
-                    </Link>
-                </Button>
+                    </Button>
+                </form>
             </div>
         </aside>
     );

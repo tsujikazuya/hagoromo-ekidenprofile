@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Users, ClipboardList, Bell, Settings, LogOut } from "lucide-react";
+import { logoutAction } from "@/app/auth/actions";
 
 export default function CoachLayout({
     children,
@@ -45,10 +46,12 @@ export default function CoachLayout({
                     ))}
                 </nav>
                 <div className="p-4 border-t">
-                    <button className="flex items-center gap-3 px-4 py-3 w-full text-left text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg">
-                        <LogOut className="w-5 h-5" />
-                        ログアウト
-                    </button>
+                    <form action={logoutAction}>
+                        <button type="submit" className="flex items-center gap-3 px-4 py-3 w-full text-left text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg">
+                            <LogOut className="w-5 h-5" />
+                            ログアウト
+                        </button>
+                    </form>
                 </div>
             </aside>
 

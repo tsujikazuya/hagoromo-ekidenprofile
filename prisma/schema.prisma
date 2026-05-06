@@ -4,12 +4,15 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 }
 
 model Athlete {
   id              String   @id @default(uuid()) @map("user_id")
+  loginId         String?  @unique @map("login_id")
+  password        String?  @map("password")
+  role            String   @default("player") @map("role")
   name            String   @default("Athlete") // Added name field
   birthDate       DateTime @map("birth_date")
   historyAnemia   Boolean  @default(false) @map("history_anemia") // 貧血既往歴
@@ -76,8 +79,73 @@ model TrainingLoad {
 
   athlete           Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
 
+  feedback          String?  @map("feedback")   // 選手の感想
+  comments          Comment[]
+
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   @@map("training_loads")
+}
+
+model Comment {
+  id                String       @id @default(uuid()) @map("comment_id")
+  content           String
+  authorName        String       @map("author_name")
+  trainingLoadId    String       @map("load_id")
+  
+  trainingLoad      TrainingLoad @relation(fields: [trainingLoadId], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  @@map("comments")
+}
+
+model Notice {
+  id        String   @id @default(uuid()) @map("notice_id")
+  title     String
+  content   String
+  author    String
+  date      DateTime @default(now())
+  type      String   @default("normal") // "normal" | "important"
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("notices")
+}
+
+model Schedule {
+  id          String   @id @default(uuid()) @map("schedule_id")
+  date        DateTime
+  title       String
+  type        String   @default("practice") // practice, race, other
+  time        String?
+  location    String?
+  description String?
+  targetTime  String?
+  lapTime     String?
+  isCompleted Boolean  @default(false)
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("schedules")
+}
+
+model TrainingMenu {
+  id          String   @id @default(uuid()) @map("menu_id")
+  date        DateTime
+  type        String   @default("practice") // lsd, jog, pace, interval, etc.
+  title       String
+  content     String?  // Detailed description / menu
+  distance    String?
+  targetTime  String?
+  author      String   @default("coach")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("training_menus")
 }

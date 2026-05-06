@@ -106,9 +106,36 @@ export default function RecordPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
-        // Mock API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        router.push("/schedule");
+
+        try {
+            // @ts-ignore - Accessing form elements directly
+            const distance = e.target.distance.value;
+            // @ts-ignore
+            const feedbackComment = e.target.comment.value;
+
+            const res = await fetch('/api/training-loads', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    date: new Date(),
+                    totalDistance: distance,
+                    rpeSession: rpe[0],
+                    feedback: feedbackComment,
+                }),
+            });
+
+            if (!res.ok) {
+                throw new Error('Failed to save data');
+            }
+
+            // Success
+            router.push("/schedule");
+        } catch (error) {
+            console.error("Error saving training data:", error);
+            alert("保存に失敗しました。もう一度お試しください。");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (

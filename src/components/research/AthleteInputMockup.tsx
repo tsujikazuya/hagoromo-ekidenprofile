@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { Textarea } from "@/components/ui/textarea";
 import { Moon, Activity, CalendarDays, Save, Dumbbell } from "lucide-react";
 
 export function AthleteInputMockup() {
@@ -126,6 +127,11 @@ export function AthleteInputMockup() {
                             </div>
                         </div>
 
+                        <div className="space-y-2 text-left mt-4 border-t pt-4">
+                            <Label>練習に関する所感・コメント (任意)</Label>
+                            <Textarea placeholder="今日の練習はどうでしたか？ 気になる点があれば記入してください" className="resize-none" rows={3} />
+                        </div>
+
                         <div className="text-right">
                             <Button variant="outline" size="sm" onClick={() => (document.querySelector('[value="condition"]') as HTMLElement)?.click()}>
                                 次へ (体調)
@@ -169,6 +175,11 @@ export function AthleteInputMockup() {
                                     <label htmlFor="sym-palp" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">動悸がする</label>
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="space-y-4 border-t pt-4">
+                            <Label>その他・指導者へのメッセージ (任意)</Label>
+                            <Textarea placeholder="疲労感や身体の違和感など、気になることがあれば自由に記入してください" className="resize-none" rows={3} />
                         </div>
 
                         <Button className="w-full bg-rose-600 hover:bg-rose-700 mt-4">

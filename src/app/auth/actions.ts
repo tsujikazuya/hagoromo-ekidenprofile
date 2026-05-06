@@ -2,43 +2,119 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { prisma } from '@/lib/prisma'
+import { cookies } from 'next/headers'
 
-import { createClient } from '@/utils/supabase/server'
+// セキュリティよりも手軽さを優先した簡易パスワードエンコード（実運用時はbcrypt等を推奨）
+function encodePassword(pwd: string) {
+    return Buffer.from(pwd).toString('base64')
+}
 
-export async function login(formData: FormData) {
-    const supabase = await createClient()
-
-    const email = formData.get('email') as string
+export async function loginAction(formData: FormData) {
+    const loginId = formData.get('loginId') as string
     const password = formData.get('password') as string
+    
+    const normalizedId = loginId.replace(/\s+/g, '')
 
-    const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-    })
+    let redirectUrl = ''
+    try {
+        const user = await prisma.athlete.findUnique({
+            where: { loginId: normalizedId }
+        })
 
-    if (error) {
-        redirect('/login?error=Could not authenticate user')
+        if (!user || user.password !== encodePassword(password)) {
+            redirectUrl = '/login?error=' + encodeURIComponent('名前またはパスワードが間違っています')
+        } else {
+            // セッションCookieを発行 (1週間の有効期限)
+            const cookieStore = await cookies()
+            cookieStore.set('auth_session', JSON.stringify({
+                userId: user.id,
+                loginId: user.loginId,
+                name: user.name,
+                role: user.role
+            }), {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 60 * 60 * 24 * 7, // 1 week
+                path: '/'
+            })
+
+            revalidatePath('/', 'layout')
+            redirectUrl = user.role === 'coach' ? '/staff' : '/'
+        }
+    } catch (e: any) {
+        console.error('Login error:', e)
+        redirectUrl = '/login?error=' + encodeURIComponent('ログイン処理中にエラーが発生しました')
+    }
+    
+    if (redirectUrl) {
+        redirect(redirectUrl)
+    }
+}
+
+export async function signUpAction(formData: FormData) {
+    const name = formData.get('name') as string
+    const loginId = formData.get('loginId') as string
+    const password = formData.get('password') as string
+    const confirmPassword = formData.get('confirmPassword') as string
+    const role = formData.get('role') as string || 'player'
+
+    if (password !== confirmPassword) {
+        redirect('/register?error=' + encodeURIComponent('パスワードが一致しません'))
+    }
+    
+    if (password.length < 4) {
+        redirect('/register?error=' + encodeURIComponent('パスワードは4文字以上にしてください'))
     }
 
-    revalidatePath('/', 'layout')
-    redirect('/')
+    const normalizedId = loginId.replace(/\s+/g, '')
+
+    let redirectUrl = ''
+    try {
+        // 重複チェック
+        const existing = await prisma.athlete.findUnique({
+            where: { loginId: normalizedId }
+        })
+
+        if (existing) {
+            redirectUrl = '/register?error=' + encodeURIComponent('このログインIDはすでに登録されています')
+        } else {
+            // Prismaに保存
+            await prisma.athlete.create({
+                data: {
+                    loginId: normalizedId,
+                    name: name,
+                    password: encodePassword(password),
+                    role: role,
+                    birthDate: new Date('2000-01-01'), // デフォルト日
+                    historyAnemia: false,
+                }
+            })
+
+            revalidatePath('/', 'layout')
+            redirectUrl = '/login?message=' + encodeURIComponent('アカウントが正常に作成されました。ログインしてください。')
+        }
+    } catch (e: any) {
+        console.error('Signup error:', e)
+        redirectUrl = '/register?error=' + encodeURIComponent('アカウント作成に失敗しました')
+    }
+
+    if (redirectUrl) {
+        redirect(redirectUrl)
+    }
+}
+
+// 互換性維持用のスタブ
+export async function login(formData: FormData) {
+    redirect('/login?error=This method is deprecated')
 }
 
 export async function signup(formData: FormData) {
-    const supabase = await createClient()
+    redirect('/login?message=This method is deprecated')
+}
 
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-
-    const { error } = await supabase.auth.signUp({
-        email,
-        password,
-    })
-
-    if (error) {
-        redirect('/login?error=Could not authenticate user')
-    }
-
-    revalidatePath('/', 'layout')
-    redirect('/login?message=Check email to continue sign in process')
+export async function logoutAction() {
+    const cookieStore = await cookies()
+    cookieStore.delete('auth_session')
+    redirect('/login')
 }

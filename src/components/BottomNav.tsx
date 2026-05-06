@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 export function BottomNav() {
     const pathname = usePathname();
 
-    // Hide on login page and coach pages (coach has its own nav)
-    if (pathname === "/login" || pathname?.startsWith("/coach")) return null;
+    // Hide only on login page
+    if (pathname === "/login") return null;
 
     const navItems = [
         { href: "/", icon: Home, label: "ホーム" },

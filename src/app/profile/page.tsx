@@ -1,37 +1,22 @@
-"use client";
-
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { LogOut, Settings, User, Check, Edit2, Save, X } from "lucide-react";
-import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { LogOut, Settings, User } from "lucide-react";
 import { WeeklyDistanceChart } from "@/components/charts/WeeklyDistanceChart";
 import { ConditionTrendChart } from "@/components/charts/ConditionTrendChart";
+import { logoutAction } from "@/app/auth/actions";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function ProfilePage() {
-    const [isEditing, setIsEditing] = useState(false);
-    const [profile, setProfile] = useState({
-        name: "選手 A",
-        team: "羽衣国際大学 女子駅伝部",
-        studentId: "1234567",
-        pb5000: "16:30.00",
-        pb3000: "9:45.00",
-        pb10000: "34:00.00",
-        pbHalf: "1:15:00"
-    });
+export default async function ProfilePage() {
+    const cookieStore = await cookies();
+    const sessionData = cookieStore.get("auth_session")?.value;
+    
+    if (!sessionData) {
+        redirect("/login");
+    }
 
-    const handleSave = () => {
-        setIsEditing(false);
-        // Save logic here (API call)
-    };
-
-    const handleCancel = () => {
-        setIsEditing(false);
-        // Reset logic could go here if needed
-    };
+    const user = JSON.parse(sessionData);
+    const isCoach = user.role === 'coach' || user.role === 'staff';
 
     return (
         <div className="p-4 space-y-6 pb-24">
@@ -39,129 +24,27 @@ export default function ProfilePage() {
 
             <Card>
                 <CardContent className="p-6 flex flex-col items-center space-y-4">
-                    <Avatar className="w-24 h-24">
-                        <AvatarFallback className="text-2xl font-bold bg-pink-100 text-pink-600">
-                            {profile.name[0]}
+                    <Avatar className="w-24 h-24 border-4 border-slate-50">
+                        <AvatarFallback className={`text-3xl font-bold ${isCoach ? 'bg-blue-100 text-blue-600' : 'bg-pink-100 text-pink-600'}`}>
+                            {user.name ? user.name[0] : <User className="w-8 h-8" />}
                         </AvatarFallback>
                     </Avatar>
 
                     <div className="text-center w-full space-y-2">
-                        {isEditing ? (
-                            <div className="space-y-3 p-2 bg-gray-50 rounded-lg">
-                                <div>
-                                    <Label className="text-left block mb-1">名前</Label>
-                                    <Input
-                                        value={profile.name}
-                                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                                        className="text-center"
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="text-left block mb-1">所属</Label>
-                                    <Input
-                                        value={profile.team}
-                                        onChange={(e) => setProfile({ ...profile, team: e.target.value })}
-                                        className="text-center"
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="text-left block mb-1">学籍番号</Label>
-                                    <Input
-                                        value={profile.studentId}
-                                        onChange={(e) => setProfile({ ...profile, studentId: e.target.value })}
-                                        className="text-center"
-                                    />
-                                </div>
-                            </div>
-                        ) : (
-                            <>
-                                <h2 className="text-xl font-bold">{profile.name}</h2>
-                                <p className="text-gray-500">{profile.team}</p>
-                                <p className="text-sm text-gray-400 mt-1">学籍番号: {profile.studentId}</p>
-                            </>
-                        )}
+                        <h2 className="text-2xl font-black text-slate-800">{user.name}</h2>
+                        <p className="text-slate-500 font-medium">{isCoach ? "専門スタッフ・指導者" : "羽衣国際大学 女子駅伝部"}</p>
+                        <p className="text-sm text-slate-400 mt-1">ログインID: {user.loginId || "未設定"}</p>
                     </div>
-
-                    {isEditing ? (
-                        <div className="flex gap-2 w-full">
-                            <Button variant="outline" className="flex-1" onClick={handleCancel}>
-                                <X className="w-4 h-4 mr-2" /> キャンセル
-                            </Button>
-                            <Button className="flex-1" onClick={handleSave}>
-                                <Save className="w-4 h-4 mr-2" /> 保存
-                            </Button>
-                        </div>
-                    ) : (
-                        <Button variant="outline" className="w-full" onClick={() => setIsEditing(true)}>
-                            <Edit2 className="w-4 h-4 mr-2" /> プロフィール編集
-                        </Button>
-                    )}
                 </CardContent>
             </Card>
 
-            <div className="space-y-4">
-                <h3 className="font-bold text-gray-900">データ分析</h3>
-                <WeeklyDistanceChart />
-                <ConditionTrendChart />
-            </div>
-
-            <div className="space-y-4">
-                <h3 className="font-bold text-gray-900">個人記録</h3>
-                <Card>
-                    <CardContent className="p-4 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label className="text-xs text-gray-500">5000m PB</Label>
-                                {isEditing ? (
-                                    <Input
-                                        value={profile.pb5000}
-                                        onChange={(e) => setProfile({ ...profile, pb5000: e.target.value })}
-                                        className="h-8 font-mono"
-                                    />
-                                ) : (
-                                    <p className="text-lg font-bold font-mono">{profile.pb5000}</p>
-                                )}
-                            </div>
-                            <div>
-                                <Label className="text-xs text-gray-500">3000m PB</Label>
-                                {isEditing ? (
-                                    <Input
-                                        value={profile.pb3000}
-                                        onChange={(e) => setProfile({ ...profile, pb3000: e.target.value })}
-                                        className="h-8 font-mono"
-                                    />
-                                ) : (
-                                    <p className="text-lg font-bold font-mono">{profile.pb3000}</p>
-                                )}
-                            </div>
-                            <div>
-                                <Label className="text-xs text-gray-500">10000m PB</Label>
-                                {isEditing ? (
-                                    <Input
-                                        value={profile.pb10000}
-                                        onChange={(e) => setProfile({ ...profile, pb10000: e.target.value })}
-                                        className="h-8 font-mono"
-                                    />
-                                ) : (
-                                    <p className="text-lg font-bold font-mono">{profile.pb10000}</p>
-                                )}
-                            </div>
-                            <div>
-                                <Label className="text-xs text-gray-500">ハーフ PB</Label>
-                                {isEditing ? (
-                                    <Input
-                                        value={profile.pbHalf}
-                                        onChange={(e) => setProfile({ ...profile, pbHalf: e.target.value })}
-                                        className="h-8 font-mono"
-                                    />
-                                ) : (
-                                    <p className="text-lg font-bold font-mono">{profile.pbHalf}</p>
-                                )}
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+            {!isCoach && (
+                <div className="space-y-4">
+                    <h3 className="font-bold text-gray-900">データ分析</h3>
+                    <WeeklyDistanceChart />
+                    <ConditionTrendChart />
+                </div>
+            )}
 
             <div className="space-y-4">
                 <h3 className="font-bold text-gray-900">設定・その他</h3>
@@ -173,12 +56,14 @@ export default function ProfilePage() {
                                 <span>アプリ設定</span>
                             </div>
                         </button>
-                        <button className="w-full p-4 flex items-center justify-between hover:bg-gray-50 text-left text-red-600">
-                            <div className="flex items-center gap-3">
-                                <LogOut className="w-5 h-5" />
-                                <span>ログアウト</span>
-                            </div>
-                        </button>
+                        <form action={logoutAction} className="w-full">
+                            <button type="submit" className="w-full p-4 flex items-center justify-between hover:bg-gray-50 text-left text-red-600">
+                                <div className="flex items-center gap-3">
+                                    <LogOut className="w-5 h-5" />
+                                    <span>ログアウト</span>
+                                </div>
+                            </button>
+                        </form>
                     </CardContent>
                 </Card>
             </div>
