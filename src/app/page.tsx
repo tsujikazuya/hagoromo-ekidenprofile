@@ -99,30 +99,7 @@ export default async function Home() {
 
             <main className="px-4 mt-6 space-y-6">
                 
-                {/* Section 1: Pending Tasks (未対応項目) */}
-                {pendingTasks.length > 0 && (
-                    <section>
-                        <h2 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3 flex items-center gap-1.5">
-                            <AlertCircle className="w-4 h-4 text-rose-500" />
-                            未対応タスク
-                        </h2>
-                        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                            {pendingTasks.map((task, i) => {
-                                const Icon = task.icon;
-                                return (
-                                    <div key={i} className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200/60 shadow-sm bg-white`}>
-                                        <div className={`p-1.5 rounded-full ${task.bg} ${task.color}`}>
-                                            <Icon className="w-4 h-4" />
-                                        </div>
-                                        <span className={`text-sm font-bold text-slate-700`}>{task.label}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </section>
-                )}
-
-                {/* Section 2: Today's Practice (今日の練習) */}
+                {/* Section 1: Today's Practice (今日の練習) */}
                 <section>
                     <h2 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3">Today's Schedule</h2>
                     <Card className="border-0 shadow-sm overflow-hidden bg-white">
@@ -171,7 +148,62 @@ export default async function Home() {
                     </Card>
                 </section>
 
-                {/* Section 3: Today's Condition Summary */}
+                {/* Section 2: Messages & Notices */}
+                <section>
+                    <h2 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3 flex items-center gap-1.5">
+                        <MessageSquare className="w-4 h-4 text-blue-500" />
+                        指導者からの連絡
+                    </h2>
+                    <div className="space-y-3">
+                        {notices.length > 0 ? notices.map((notice) => (
+                            <Link href="#" key={notice.id} className="block">
+                                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-start gap-3 hover:border-blue-200 transition-colors">
+                                    <div className={`p-2 rounded-full mt-0.5 ${notice.type === 'important' ? 'bg-rose-100 text-rose-500' : 'bg-slate-100 text-slate-500'}`}>
+                                        <Bell className="w-4 h-4" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-[10px] font-bold text-slate-400">{notice.author}</span>
+                                            <span className="text-[10px] text-slate-400">
+                                                {new Date(notice.createdAt).toLocaleDateString('ja-JP')}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm font-bold text-slate-800 leading-snug">{notice.title}</p>
+                                    </div>
+                                </div>
+                            </Link>
+                        )) : (
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 text-center">
+                                <p className="text-sm font-bold text-slate-500">新しい連絡はありません</p>
+                            </div>
+                        )}
+                    </div>
+                </section>
+
+                {/* Section 3: Pending Tasks (未対応項目) */}
+                {pendingTasks.length > 0 && (
+                    <section>
+                        <h2 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3 flex items-center gap-1.5">
+                            <AlertCircle className="w-4 h-4 text-rose-500" />
+                            未対応タスク
+                        </h2>
+                        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                            {pendingTasks.map((task, i) => {
+                                const Icon = task.icon;
+                                return (
+                                    <div key={i} className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200/60 shadow-sm bg-white`}>
+                                        <div className={`p-1.5 rounded-full ${task.bg} ${task.color}`}>
+                                            <Icon className="w-4 h-4" />
+                                        </div>
+                                        <span className={`text-sm font-bold text-slate-700`}>{task.label}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+                )}
+
+                {/* Section 4: Today's Condition Summary */}
                 <section>
                     <div className="flex justify-between items-center mb-3">
                         <h2 className="text-xs font-bold text-slate-500 tracking-wider uppercase">Condition Summary</h2>
@@ -207,39 +239,7 @@ export default async function Home() {
                     )}
                 </section>
 
-                {/* Section 4: Messages & Notices */}
-                <section>
-                    <h2 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3 flex items-center gap-1.5">
-                        <MessageSquare className="w-4 h-4 text-blue-500" />
-                        指導者からの連絡
-                    </h2>
-                    <div className="space-y-3">
-                        {notices.length > 0 ? notices.map((notice) => (
-                            <Link href="#" key={notice.id} className="block">
-                                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-start gap-3 hover:border-blue-200 transition-colors">
-                                    <div className={`p-2 rounded-full mt-0.5 ${notice.type === 'important' ? 'bg-rose-100 text-rose-500' : 'bg-slate-100 text-slate-500'}`}>
-                                        <Bell className="w-4 h-4" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <span className="text-[10px] font-bold text-slate-400">{notice.author}</span>
-                                            <span className="text-[10px] text-slate-400">
-                                                {new Date(notice.createdAt).toLocaleDateString('ja-JP')}
-                                            </span>
-                                        </div>
-                                        <p className="text-sm font-bold text-slate-800 leading-snug">{notice.title}</p>
-                                    </div>
-                                </div>
-                            </Link>
-                        )) : (
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 text-center">
-                                <p className="text-sm font-bold text-slate-500">新しい連絡はありません</p>
-                            </div>
-                        )}
-                    </div>
-                </section>
-
-                {/* Section 6: Quick Access */}
+                {/* Section 5: Quick Access */}
                 <section className="pt-2">
                     <h2 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3">Quick Access</h2>
                     <div className="grid grid-cols-2 gap-3">
