@@ -20,8 +20,12 @@ export default function RecordPage() {
     const [rpe, setRpe] = useState([5]);
     const [trainingType, setTrainingType] = useState<string>("");
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [formAdvice, setFormAdvice] = useState<string>("");
     const [isCoach, setIsCoach] = useState(false); // Mock role for demo
+    const [formAdvice, setFormAdvice] = useState<string>("");
+
+    // Date and Time State
+    const [recordDate, setRecordDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [recordTime, setRecordTime] = useState("");
 
     // Video Analysis State
     const [isUploading, setIsUploading] = useState(false);
@@ -113,11 +117,13 @@ export default function RecordPage() {
             // @ts-ignore
             const feedbackComment = e.target.comment.value;
 
+            const combinedDate = new Date(`${recordDate}T${recordTime || '00:00'}:00`);
+
             const res = await fetch('/api/training-loads', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    date: new Date(),
+                    date: combinedDate,
                     totalDistance: distance,
                     rpeSession: rpe[0],
                     feedback: feedbackComment,
@@ -161,6 +167,33 @@ export default function RecordPage() {
             </header>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Date and Time Input */}
+                <Card className="bg-white border-gray-200">
+                    <CardContent className="p-4 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="date">期日</Label>
+                                <Input 
+                                    id="date" 
+                                    type="date" 
+                                    value={recordDate} 
+                                    onChange={(e) => setRecordDate(e.target.value)} 
+                                    required 
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="time">時間</Label>
+                                <Input 
+                                    id="time" 
+                                    type="time" 
+                                    value={recordTime} 
+                                    onChange={(e) => setRecordTime(e.target.value)} 
+                                />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
                 {/* Training Menu Input */}
                 <Card className="bg-white border-gray-200">
                     <CardHeader className="pb-2">
