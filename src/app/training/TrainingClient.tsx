@@ -27,6 +27,19 @@ export interface TrainingMenu {
     author: string;
 }
 
+export interface TrainingBlock {
+    id: string;
+    type: string;
+    distance?: string;
+    targetTime?: string;
+    recoveryDist?: string;
+    recoveryTime?: string;
+    reps?: string;
+    sets?: string;
+    endPace?: string;
+    otherMenu?: string;
+}
+
 export function TrainingClient({ 
     initialMenus,
     userRole
@@ -37,7 +50,6 @@ export function TrainingClient({
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
 
-    // デモ用にトグル可能にする
     const [isCoach, setIsCoach] = useState(userRole === "coach" || userRole === "staff" || userRole === "manager");
 
     const [date, setDate] = useState<Date | undefined>(new Date());
@@ -46,30 +58,58 @@ export function TrainingClient({
 
     // Form states
     const [newTitle, setNewTitle] = useState("");
-    const [newType, setNewType] = useState<string>("practice");
     const [newTime, setNewTime] = useState("");
-    const [newContent, setNewContent] = useState("");
-    const [newDistance, setNewDistance] = useState("");
-    const [newTargetTime, setNewTargetTime] = useState("");
+    
+    const [trainingBlocks, setTrainingBlocks] = useState<TrainingBlock[]>([
+        { id: '1', type: '' }
+    ]);
+
+    const updateBlock = (id: string, field: keyof TrainingBlock, value: string) => {
+        setTrainingBlocks(prev => prev.map(block => 
+            block.id === id ? { ...block, [field]: value } : block
+        ));
+    };
+
+    const addBlock = () => {
+        setTrainingBlocks(prev => [
+            ...prev,
+            { id: Date.now().toString(), type: '' }
+        ]);
+    };
+
+    const removeBlock = (id: string) => {
+        if (trainingBlocks.length > 1) {
+            setTrainingBlocks(prev => prev.filter(block => block.id !== id));
+        }
+    };
 
     const resetForm = () => {
         setEditingMenuId(null);
         setNewTitle("");
-        setNewType("practice");
         setNewTime("");
-        setNewContent("");
-        setNewDistance("");
-        setNewTargetTime("");
+        setTrainingBlocks([{ id: '1', type: '' }]);
     };
 
     const handleEditMenu = (menu: TrainingMenu) => {
         setEditingMenuId(menu.id);
         setNewTitle(menu.title);
-        setNewType(menu.type);
         setNewTime(menu.time || "");
-        setNewContent(menu.content || "");
-        setNewDistance(menu.distance || "");
-        setNewTargetTime(menu.targetTime || "");
+        
+        try {
+            if (menu.content && menu.content.startsWith('[')) {
+                const parsed = JSON.parse(menu.content);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    setTrainingBlocks(parsed);
+                } else {
+                    setTrainingBlocks([{ id: '1', type: menu.type, distance: menu.distance || undefined, targetTime: menu.targetTime || undefined, otherMenu: menu.content }]);
+                }
+            } else {
+                setTrainingBlocks([{ id: '1', type: menu.type, distance: menu.distance || undefined, targetTime: menu.targetTime || undefined, otherMenu: menu.content || undefined }]);
+            }
+        } catch (e) {
+            setTrainingBlocks([{ id: '1', type: menu.type, distance: menu.distance || undefined, targetTime: menu.targetTime || undefined, otherMenu: menu.content || undefined }]);
+        }
+        
         setIsDialogOpen(true);
     };
 
@@ -82,11 +122,11 @@ export function TrainingClient({
                 id: editingMenuId || undefined,
                 date: new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())),
                 title: newTitle,
-                type: newType,
+                type: trainingBlocks[0]?.type || "practice",
                 time: newTime || undefined,
-                content: newContent || undefined,
-                distance: newDistance || undefined,
-                targetTime: newTargetTime || undefined,
+                content: JSON.stringify(trainingBlocks),
+                distance: undefined,
+                targetTime: undefined,
             };
 
             const res = await upsertTrainingMenu(data);
@@ -139,7 +179,6 @@ export function TrainingClient({
                     <p className="text-sm text-gray-500 mt-1">日々の練習メニューを確認・管理します</p>
                 </div>
                 
-                {/* 権限切り替えモックアップ（デモ用） */}
                 <Button
                     variant="outline"
                     size="sm"
@@ -183,51 +222,118 @@ export function TrainingClient({
                                         <Plus className="w-4 h-4" /> メニュー追加
                                     </Button>
                                 </DialogTrigger>
-                                <DialogContent className="sm:max-w-[425px]">
+                                <DialogContent className="sm:max-w-[425px] max-h-[85vh] overflow-y-auto">
                                     <form onSubmit={handleSaveMenu}>
                                         <DialogHeader>
                                             <DialogTitle>{editingMenuId ? "メニューを編集" : "メニューを追加"}</DialogTitle>
                                         </DialogHeader>
                                         <div className="grid gap-4 py-4">
                                             <div className="grid gap-2">
-                                                <Label htmlFor="title">タイトル <span className="text-red-500">*</span></Label>
-                                                <Input id="title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} required placeholder="例: ペース走、インターバル" />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="time">実施時間</Label>
-                                                    <Input id="time" type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} />
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="type">トレーニング種別</Label>
-                                                    <Select value={newType} onValueChange={setNewType}>
-                                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="practice">通常練習</SelectItem>
-                                                            <SelectItem value="lsd">LSD</SelectItem>
-                                                            <SelectItem value="jog">ジョグ</SelectItem>
-                                                            <SelectItem value="pace">ペース走</SelectItem>
-                                                            <SelectItem value="interval">インターバル</SelectItem>
-                                                            <SelectItem value="buildup">ビルドアップ</SelectItem>
-                                                            <SelectItem value="recovery">回復系</SelectItem>
-                                                            <SelectItem value="other">その他</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
+                                                <Label htmlFor="title">本日のテーマ/タイトル <span className="text-red-500">*</span></Label>
+                                                <Input id="title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} required placeholder="例: スピード持久力強化" />
                                             </div>
                                             <div className="grid gap-2">
-                                                <Label htmlFor="content">詳細・メニュー内容</Label>
-                                                <Textarea id="content" value={newContent} onChange={(e) => setNewContent(e.target.value)} className="min-h-[100px]" placeholder="アップ 20分, 本メニュー, ダウン" />
+                                                <Label htmlFor="time">開始時間</Label>
+                                                <Input id="time" type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} />
                                             </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="distance">距離設定</Label>
-                                                    <Input id="distance" value={newDistance} onChange={(e) => setNewDistance(e.target.value)} placeholder="例: 10km, 400m×10" />
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="targetTime">設定ペース/タイム</Label>
-                                                    <Input id="targetTime" value={newTargetTime} onChange={(e) => setNewTargetTime(e.target.value)} placeholder="例: 3:30/km, 72秒" />
-                                                </div>
+                                            
+                                            <div className="space-y-4 mt-4">
+                                                <Label>トレーニングブロック</Label>
+                                                {trainingBlocks.map((block, index) => (
+                                                    <div key={block.id} className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4 relative">
+                                                        {trainingBlocks.length > 1 && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="absolute top-2 right-2 text-rose-500 hover:bg-rose-50"
+                                                                onClick={() => removeBlock(block.id)}
+                                                            >
+                                                                削除
+                                                            </Button>
+                                                        )}
+                                                        
+                                                        <div className="space-y-2">
+                                                            <Label>種別 {index + 1}</Label>
+                                                            <Select value={block.type} onValueChange={(val) => updateBlock(block.id, 'type', val)}>
+                                                                <SelectTrigger><SelectValue placeholder="種別を選択" /></SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="lsd">LSD</SelectItem>
+                                                                    <SelectItem value="jog">ジョグ</SelectItem>
+                                                                    <SelectItem value="pace">ペース走</SelectItem>
+                                                                    <SelectItem value="tempo">テンポ走（LT走）</SelectItem>
+                                                                    <SelectItem value="interval">インターバル</SelectItem>
+                                                                    <SelectItem value="buildup">ビルドアップ走</SelectItem>
+                                                                    <SelectItem value="repetition">レペティション</SelectItem>
+                                                                    <SelectItem value="hill">坂道トレーニング</SelectItem>
+                                                                    <SelectItem value="weight_all">ウェイト（全体）</SelectItem>
+                                                                    <SelectItem value="weight_ind">ウェイト（個別）</SelectItem>
+                                                                    <SelectItem value="drill">技術・ドリル</SelectItem>
+                                                                    <SelectItem value="sprint">スプリント／流し</SelectItem>
+                                                                    <SelectItem value="recovery">回復系</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+
+                                                        {(block.type === 'interval' || block.type === 'repetition' || block.type === 'hill' || block.type === 'sprint') ? (
+                                                            <div className="space-y-4 animate-in fade-in">
+                                                                <div className="grid grid-cols-2 gap-4">
+                                                                    <div className="space-y-2">
+                                                                        <Label>疾走距離</Label>
+                                                                        <Input placeholder="例: 400m" value={block.distance || ''} onChange={(e) => updateBlock(block.id, 'distance', e.target.value)} />
+                                                                    </div>
+                                                                    <div className="space-y-2">
+                                                                        <Label>疾走設定タイム</Label>
+                                                                        <Input placeholder="例: 72秒" value={block.targetTime || ''} onChange={(e) => updateBlock(block.id, 'targetTime', e.target.value)} />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="space-y-2">
+                                                                    <Label>リカバリー</Label>
+                                                                    <div className="flex gap-2">
+                                                                        <Input placeholder="距離(例:200m)" value={block.recoveryDist || ''} onChange={(e) => updateBlock(block.id, 'recoveryDist', e.target.value)} />
+                                                                        <Input placeholder="時間(例:90秒)" value={block.recoveryTime || ''} onChange={(e) => updateBlock(block.id, 'recoveryTime', e.target.value)} />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="grid grid-cols-2 gap-4">
+                                                                    <div className="space-y-2">
+                                                                        <Label>回数</Label>
+                                                                        <Input type="number" placeholder="10" value={block.reps || ''} onChange={(e) => updateBlock(block.id, 'reps', e.target.value)} />
+                                                                    </div>
+                                                                    <div className="space-y-2">
+                                                                        <Label>セット数</Label>
+                                                                        <Input type="number" placeholder="1" value={block.sets || ''} onChange={(e) => updateBlock(block.id, 'sets', e.target.value)} />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ) : (block.type === 'weight_all' || block.type === 'weight_ind' || block.type === 'drill') ? (
+                                                            <div className="space-y-4 animate-in fade-in">
+                                                                <p className="text-sm text-gray-500">詳細を下部に記入してください。</p>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-4 animate-in fade-in">
+                                                                <div className="grid grid-cols-2 gap-4">
+                                                                    <div className="space-y-2">
+                                                                        <Label>設定距離/時間</Label>
+                                                                        <Input placeholder="例: 10km, 60分" value={block.distance || ''} onChange={(e) => updateBlock(block.id, 'distance', e.target.value)} />
+                                                                    </div>
+                                                                    <div className="space-y-2">
+                                                                        <Label>設定ペース</Label>
+                                                                        <Input placeholder="例: 4:30/km" value={block.targetTime || ''} onChange={(e) => updateBlock(block.id, 'targetTime', e.target.value)} />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        <div className="space-y-2">
+                                                            <Label>詳細・その他</Label>
+                                                            <Input placeholder="例: 傾斜3%" value={block.otherMenu || ''} onChange={(e) => updateBlock(block.id, 'otherMenu', e.target.value)} />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                
+                                                <Button type="button" variant="outline" className="w-full border-dashed border-2 text-pink-600" onClick={addBlock}>
+                                                    + トレーニング種別を追加
+                                                </Button>
                                             </div>
                                         </div>
                                         <DialogFooter className="sm:justify-between items-center flex-row">
@@ -237,7 +343,7 @@ export function TrainingClient({
                                                 </Button>
                                             ) : <div></div>}
                                             <Button type="submit" disabled={isPending || !newTitle} className="bg-pink-600 hover:bg-pink-700 text-white min-w-[120px]">
-                                                {isPending ? "保存中..." : (editingMenuId ? "更新する" : "追加する")}
+                                                {isPending ? "保存中..." : (editingMenuId ? "更新する" : "保存する")}
                                             </Button>
                                         </DialogFooter>
                                     </form>
@@ -248,7 +354,17 @@ export function TrainingClient({
 
                     <div className="space-y-4">
                         {selectedDateMenus.length > 0 ? (
-                            selectedDateMenus.map((menu) => (
+                            selectedDateMenus.map((menu) => {
+                                let parsedBlocks: TrainingBlock[] = [];
+                                let isJsonBlocks = false;
+                                try {
+                                    if (menu.content && menu.content.startsWith('[')) {
+                                        parsedBlocks = JSON.parse(menu.content);
+                                        isJsonBlocks = true;
+                                    }
+                                } catch(e) {}
+
+                                return (
                                 <Card key={menu.id} className="border-l-4 border-l-pink-600 shadow-sm transition-all hover:shadow-md bg-white">
                                     <CardHeader className="py-3 px-4">
                                         <div className="flex justify-between items-center mb-1">
@@ -267,45 +383,64 @@ export function TrainingClient({
                                                 </div>
                                             )}
                                         </div>
-                                        <CardTitle className="text-lg font-bold text-gray-800">
-                                            {menu.title}
+                                        <CardTitle className="text-lg font-bold text-gray-800 flex items-center justify-between">
+                                            <span>{menu.title}</span>
+                                            {menu.time && (
+                                                <span className="text-sm font-normal text-pink-600 flex items-center gap-1 bg-pink-50 px-2 py-0.5 rounded-full">
+                                                    <Clock className="w-3 h-3" /> {menu.time}開始
+                                                </span>
+                                            )}
                                         </CardTitle>
                                     </CardHeader>
                                     
                                     <CardContent className="pb-4 px-4 space-y-3">
-                                        {(menu.time || menu.distance || menu.targetTime) && (
-                                            <div className="p-3 bg-pink-50/50 rounded-lg border border-pink-100/50 flex flex-wrap gap-4 text-sm">
-                                                {menu.time && (
-                                                    <div className="flex items-center gap-2">
-                                                        <Clock className="w-4 h-4 text-pink-600" />
-                                                        <span className="font-bold text-gray-700">開始時間:</span>
-                                                        <span className="font-mono text-pink-700">{menu.time}</span>
+                                        {isJsonBlocks ? (
+                                            <div className="space-y-2">
+                                                {parsedBlocks.map((b, i) => (
+                                                    <div key={i} className="p-2 bg-gray-50 rounded border border-gray-100 text-sm">
+                                                        <div className="font-bold text-pink-700 mb-1">
+                                                            {i+1}. {b.type}
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-gray-600 text-xs">
+                                                            {b.distance && <span>距離: {b.distance}</span>}
+                                                            {b.targetTime && <span>タイム: {b.targetTime}</span>}
+                                                            {b.reps && <span>回数: {b.reps}本 {b.sets ? `x ${b.sets}set` : ''}</span>}
+                                                            {(b.recoveryDist || b.recoveryTime) && <span>R: {b.recoveryDist} {b.recoveryTime}</span>}
+                                                            {b.otherMenu && <span className="w-full mt-1 text-gray-500">詳細: {b.otherMenu}</span>}
+                                                        </div>
                                                     </div>
-                                                )}
-                                                {menu.distance && (
-                                                    <div className="flex items-center gap-2">
-                                                        <Tag className="w-4 h-4 text-pink-600" />
-                                                        <span className="font-bold text-gray-700">設定距離:</span>
-                                                        <span className="font-mono text-pink-700">{menu.distance}</span>
-                                                    </div>
-                                                )}
-                                                {menu.targetTime && (
-                                                    <div className="flex items-center gap-2">
-                                                        <Clock className="w-4 h-4 text-pink-600" />
-                                                        <span className="font-bold text-gray-700">設定ペース:</span>
-                                                        <span className="font-mono text-pink-700">{menu.targetTime}</span>
-                                                    </div>
-                                                )}
+                                                ))}
                                             </div>
-                                        )}
-                                        
-                                        {menu.content && (
-                                            <div className="p-3 bg-gray-50 rounded-lg whitespace-pre-wrap text-gray-700 text-sm leading-relaxed border border-gray-100">
-                                                <div className="flex items-center gap-2 mb-2 text-xs text-gray-400 font-bold uppercase border-b border-gray-200 pb-1">
-                                                    <AlignLeft className="w-3 h-3" /> メニュー詳細
-                                                </div>
-                                                {menu.content}
-                                            </div>
+                                        ) : (
+                                            <>
+                                                {(menu.distance || menu.targetTime) && (
+                                                    <div className="p-3 bg-pink-50/50 rounded-lg border border-pink-100/50 flex flex-wrap gap-4 text-sm">
+                                                        {menu.distance && (
+                                                            <div className="flex items-center gap-2">
+                                                                <Tag className="w-4 h-4 text-pink-600" />
+                                                                <span className="font-bold text-gray-700">設定距離:</span>
+                                                                <span className="font-mono text-pink-700">{menu.distance}</span>
+                                                            </div>
+                                                        )}
+                                                        {menu.targetTime && (
+                                                            <div className="flex items-center gap-2">
+                                                                <Clock className="w-4 h-4 text-pink-600" />
+                                                                <span className="font-bold text-gray-700">設定ペース:</span>
+                                                                <span className="font-mono text-pink-700">{menu.targetTime}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                
+                                                {menu.content && (
+                                                    <div className="p-3 bg-gray-50 rounded-lg whitespace-pre-wrap text-gray-700 text-sm leading-relaxed border border-gray-100">
+                                                        <div className="flex items-center gap-2 mb-2 text-xs text-gray-400 font-bold uppercase border-b border-gray-200 pb-1">
+                                                            <AlignLeft className="w-3 h-3" /> メニュー詳細
+                                                        </div>
+                                                        {menu.content}
+                                                    </div>
+                                                )}
+                                            </>
                                         )}
                                         
                                         <div className="text-right mt-2">
@@ -315,7 +450,8 @@ export function TrainingClient({
                                         </div>
                                     </CardContent>
                                 </Card>
-                            ))
+                                );
+                            })
                         ) : (
                             <div className="text-center py-12 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                                 <Dumbbell className="w-8 h-8 mx-auto mb-3 text-gray-300" />

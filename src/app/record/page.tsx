@@ -54,6 +54,57 @@ export default function RecordPage() {
             setTrainingBlocks(prev => prev.filter(block => block.id !== id));
         }
     };
+
+    // オーバーラップ機能: 日付変更時に指導者のメニューを取得
+    const [isLoadingMenu, setIsLoadingMenu] = useState(false);
+    useEffect(() => {
+        const fetchMenuForDate = async () => {
+            if (!recordDate) return;
+            setIsLoadingMenu(true);
+            try {
+                const res = await fetch(`/api/training-menus?date=${recordDate}`);
+                if (res.ok) {
+                    const menus = await res.json();
+                    if (menus && menus.length > 0) {
+                        // 全メニューのブロックを結合
+                        let allBlocks: TrainingBlock[] = [];
+                        menus.forEach((menu: any) => {
+                            if (menu.content && menu.content.startsWith('[')) {
+                                try {
+                                    const parsed = JSON.parse(menu.content);
+                                    if (Array.isArray(parsed)) {
+                                        // IDの衝突を防ぐために新しいIDを付与
+                                        const newBlocks = parsed.map(b => ({...b, id: Date.now().toString() + Math.random().toString()}));
+                                        allBlocks = [...allBlocks, ...newBlocks];
+                                    }
+                                } catch(e) {}
+                            } else {
+                                // 古い形式のデータの場合
+                                allBlocks.push({
+                                    id: Date.now().toString() + Math.random().toString(),
+                                    type: menu.type || 'practice',
+                                    distance: menu.distance || undefined,
+                                    targetTime: menu.targetTime || undefined,
+                                    otherMenu: menu.content || undefined
+                                });
+                            }
+                        });
+
+                        if (allBlocks.length > 0) {
+                            setTrainingBlocks(allBlocks);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch menu for date:", error);
+            } finally {
+                setIsLoadingMenu(false);
+            }
+        };
+
+        fetchMenuForDate();
+    }, [recordDate]);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isCoach, setIsCoach] = useState(false); // Mock role for demo
     const [formAdvice, setFormAdvice] = useState<string>("");
@@ -244,8 +295,9 @@ export default function RecordPage() {
 
                 {/* Training Menu Input */}
                 <Card className="bg-white border-gray-200">
-                    <CardHeader className="pb-2">
+                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
                         <CardTitle className="text-lg font-bold">トレーニング内容</CardTitle>
+                        {isLoadingMenu && <span className="text-xs text-blue-600 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" />メニュー取得中...</span>}
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {trainingBlocks.map((block, index) => (
