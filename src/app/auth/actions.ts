@@ -118,3 +118,51 @@ export async function logoutAction() {
     cookieStore.delete('auth_session')
     redirect('/login')
 }
+
+export async function demoLoginAction(role: 'player' | 'coach') {
+    let redirectUrl = ''
+    try {
+        const testId = role === 'coach' ? 'test_coach' : 'test_player'
+        const testName = role === 'coach' ? 'テスト監督' : 'テスト選手'
+        
+        let user = await prisma.athlete.findUnique({
+            where: { loginId: testId }
+        })
+
+        if (!user) {
+            user = await prisma.athlete.create({
+                data: {
+                    loginId: testId,
+                    name: testName,
+                    password: encodePassword('1234'),
+                    role: role,
+                    birthDate: new Date('2000-01-01'),
+                    historyAnemia: false,
+                }
+            })
+        }
+
+        const cookieStore = await cookies()
+        cookieStore.set('auth_session', JSON.stringify({
+            userId: user.id,
+            loginId: user.loginId,
+            name: user.name,
+            role: user.role
+        }), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 60 * 60 * 24 * 7, // 1 week
+            path: '/'
+        })
+
+        revalidatePath('/', 'layout')
+        redirectUrl = user.role === 'coach' ? '/staff' : '/'
+    } catch (e: any) {
+        console.error('Demo Login error:', e)
+        redirectUrl = '/login?error=' + encodeURIComponent('デモログインに失敗しました')
+    }
+
+    if (redirectUrl) {
+        redirect(redirectUrl)
+    }
+}

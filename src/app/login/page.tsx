@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { loginAction } from '../auth/actions';
+import { loginAction, demoLoginAction } from '../auth/actions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,6 +85,34 @@ function LoginForm() {
                 <SubmitButton />
                 <Button variant="outline" type="button" asChild>
                     <Link href="/register">新規アカウントを作成する</Link>
+                </Button>
+            </div>
+            
+            <div className="relative my-4 pt-2">
+                <div className="absolute inset-0 flex items-center pt-2">
+                    <span className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase pt-2">
+                    <span className="bg-white px-2 text-gray-500 font-bold tracking-widest rounded-full">TEST LOGIN</span>
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2">
+                <Button 
+                    variant="secondary" 
+                    type="submit"
+                    formAction={demoLoginAction.bind(null, 'player')}
+                    className="w-full text-xs bg-pink-50 hover:bg-pink-100 text-pink-700 font-bold border border-pink-200 shadow-sm"
+                >
+                    選手としてテストログイン
+                </Button>
+                <Button 
+                    variant="secondary" 
+                    type="submit"
+                    formAction={demoLoginAction.bind(null, 'coach')}
+                    className="w-full text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold border border-blue-200 shadow-sm"
+                >
+                    監督としてテストログイン
                 </Button>
             </div>
         </form>
