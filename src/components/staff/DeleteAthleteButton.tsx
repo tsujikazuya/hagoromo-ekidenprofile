@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { deleteAthlete } from "@/app/staff/actions";
 
-export function DeleteAthleteButton({ athleteId, athleteName }: { athleteId: string, athleteName: string }) {
+export function DeleteAthleteButton({ athleteId, athleteName, role = "player" }: { athleteId: string, athleteName: string, role?: string }) {
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
 
@@ -14,6 +14,7 @@ export function DeleteAthleteButton({ athleteId, athleteName }: { athleteId: str
         e.preventDefault();
         e.stopPropagation();
         
+        const targetName = role === "coach" ? "指導者" : "選手";
         if (window.confirm(`本当に「${athleteName}」を削除しますか？\nこの操作は元に戻せず、関連するすべての記録も削除されます。`)) {
             startTransition(async () => {
                 const res = await deleteAthlete(athleteId);
@@ -36,7 +37,7 @@ export function DeleteAthleteButton({ athleteId, athleteName }: { athleteId: str
             className="w-full sm:w-auto"
         >
             <Trash2 className="w-4 h-4 mr-2" />
-            {isPending ? "削除中..." : "この選手を削除する"}
+            {isPending ? "削除中..." : `この${role === 'coach' ? '指導者' : '選手'}を削除する`}
         </Button>
     );
 }

@@ -23,7 +23,7 @@ export async function GET() {
         let submittedTodayCount = 0;
         let warningCount = 0;
 
-        const processedAthletes = athletes.map(athlete => {
+        const processedAthletes = athletes.filter(a => a.role === 'player').map(athlete => {
             const condition = athlete.dailyConditions[0];
             const blood = athlete.bloodTests[0];
 
@@ -39,7 +39,6 @@ export async function GET() {
                 }
                 
                 fatigue = condition.subjectiveFatigue || 0;
-                // Simple threshold logic mapping fatigue 0-100 to danger/warning
                 if (fatigue > 80) {
                     status = 'danger';
                     warningCount++;
@@ -51,7 +50,6 @@ export async function GET() {
                 }
             }
 
-            // Check ferritin for additional warnings
             if (blood && blood.ferritin < 30) {
                 if (status !== 'danger') {
                     status = 'warning';
@@ -69,15 +67,28 @@ export async function GET() {
             };
         });
 
+        const processedCoaches = athletes.filter(a => a.role === 'coach').map(coach => {
+            return {
+                id: coach.id,
+                name: coach.name,
+                status: 'ok',
+                fatigue: 0,
+                submitted: false,
+                latestCondition: null,
+                latestBloodTest: null
+            };
+        });
+
         const teamStatus = {
-            total: athletes.length,
+            total: processedAthletes.length,
             submittedToday: submittedTodayCount,
             warnings: warningCount
         };
 
         return NextResponse.json({
             teamStatus,
-            athletes: processedAthletes
+            athletes: processedAthletes,
+            coaches: processedCoaches
         });
     } catch (error) {
         console.error('Error fetching staff dashboard data:', error);

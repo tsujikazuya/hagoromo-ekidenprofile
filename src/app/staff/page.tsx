@@ -24,6 +24,7 @@ interface DashboardData {
         warnings: number;
     };
     athletes: AthleteData[];
+    coaches: AthleteData[];
 }
 
 export default function StaffDashboard() {
@@ -51,7 +52,7 @@ export default function StaffDashboard() {
         return <div className="p-8 text-center text-red-500">データの取得に失敗しました。</div>;
     }
 
-    const { teamStatus, athletes } = data;
+    const { teamStatus, athletes, coaches } = data;
 
     // Filter athletes by status for the alert section
     const alertAthletes = athletes.filter(a => a.status === 'danger' || a.status === 'warning');
@@ -203,6 +204,36 @@ export default function StaffDashboard() {
                             </div>
                         </CardContent>
                     </Card>
+
+                    {/* All Coaches List */}
+                    {coaches && coaches.length > 0 && (
+                        <Card className="shadow-sm mt-6">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-lg text-slate-800">指導者・スタッフ一覧</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
+                                    {coaches.map((coach) => (
+                                        <Link key={coach.id} href={`/staff/player/${coach.id}`} className="block">
+                                            <div className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors cursor-pointer">
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar className="h-9 w-9">
+                                                        <AvatarFallback className="bg-blue-100 text-blue-700 font-bold text-sm">
+                                                            {coach.name.substring(0, 1) || "C"}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <p className="font-medium text-slate-900 text-sm">{coach.name}</p>
+                                                        <p className="text-[10px] text-blue-500 font-bold mt-0.5">STAFF</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
 
                 {/* Right Column: Data Entry */}

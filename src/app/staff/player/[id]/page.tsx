@@ -43,7 +43,9 @@ export default async function PlayerDetailsPage({ params }: { params: Promise<{ 
                 <Link href="/staff" className="text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-1 bg-slate-100 px-3 py-1.5 rounded-full text-sm font-medium">
                     <ArrowLeft className="w-4 h-4" /> 戻る
                 </Link>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-800 flex-1">選手詳細記録</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-800 flex-1">
+                    {athlete.role === 'coach' ? '指導者詳細記録' : '選手詳細記録'}
+                </h1>
             </div>
 
             {/* Profile Section */}
@@ -77,7 +79,9 @@ export default async function PlayerDetailsPage({ params }: { params: Promise<{ 
                 </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {athlete.role !== 'coach' && (
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Recent Conditions */}
                 <Card className="shadow-sm border-0 h-full">
                     <CardHeader className="bg-slate-50/50 border-b pb-4">
@@ -189,6 +193,8 @@ export default async function PlayerDetailsPage({ params }: { params: Promise<{ 
                     )}
                 </CardContent>
             </Card>
+                </>
+            )}
 
             {/* Danger Zone: Delete User */}
             <Card className="border-rose-200 bg-rose-50/50 shadow-sm mt-12">
@@ -196,9 +202,9 @@ export default async function PlayerDetailsPage({ params }: { params: Promise<{ 
                     <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                         <div>
                             <h3 className="text-lg font-bold text-rose-800">メンバーの削除</h3>
-                            <p className="text-sm text-rose-600 mt-1">この操作は取り消せません。選手のアカウントとすべての記録が永久に削除されます。</p>
+                            <p className="text-sm text-rose-600 mt-1">この操作は取り消せません。このアカウントとすべての記録が永久に削除されます。</p>
                         </div>
-                        <DeleteAthleteButton athleteId={athlete.id} athleteName={athlete.name} />
+                        <DeleteAthleteButton athleteId={athlete.id} athleteName={athlete.name} role={athlete.role} />
                     </div>
                 </CardContent>
             </Card>
