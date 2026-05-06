@@ -60,20 +60,16 @@ function RegisterForm() {
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="name">氏名 (漢字)</Label>
-                <Input id="name" name="name" placeholder="例: 羽衣 花子" required />
+                <Label htmlFor="name">Name：</Label>
+                <Input id="name" name="name" placeholder="Name" required />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="loginId">名前（ひらがな・下の名前のみ）</Label>
-                <Input id="loginId" name="loginId" placeholder="例: はなこ" required />
+                <Label htmlFor="password">password  :  </Label>
+                <Input id="password" name="password" type="password" required />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="password">パスワード</Label>
-                <Input id="password" name="password" type="password" placeholder="4文字以上" required />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="confirmPassword">パスワード (確認)</Label>
-                <Input id="confirmPassword" name="confirmPassword" type="password" placeholder="もう一度入力" required />
+                <Label htmlFor="confirmPassword">password（確認）：</Label>
+                <Input id="confirmPassword" name="confirmPassword" type="password" required />
             </div>
 
             {errorParam && (

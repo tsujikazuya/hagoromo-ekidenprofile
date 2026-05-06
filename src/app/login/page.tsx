@@ -54,19 +54,17 @@ function LoginForm() {
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="loginId">
-                    {role === "player" ? "名前（ひらがな・下の名前のみ）" : "スタッフID"}
-                </Label>
+                <Label htmlFor="loginId">Name：</Label>
                 <Input 
                     id="loginId" 
                     name="loginId" 
                     type="text" 
-                    placeholder={role === "player" ? "例: はなこ" : "例: tanaka_coach"} 
+                    placeholder="Name" 
                     required 
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="password">パスワード</Label>
+                <Label htmlFor="password">password  :  </Label>
                 <Input id="password" name="password" type="password" required />
             </div>
             

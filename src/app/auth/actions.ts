@@ -54,7 +54,7 @@ export async function loginAction(formData: FormData) {
 
 export async function signUpAction(formData: FormData) {
     const name = formData.get('name') as string
-    const loginId = formData.get('loginId') as string
+    const loginId = (formData.get('loginId') as string) || name
     const password = formData.get('password') as string
     const confirmPassword = formData.get('confirmPassword') as string
     const role = formData.get('role') as string || 'player'
