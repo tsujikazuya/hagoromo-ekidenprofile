@@ -1,11 +1,13 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider  = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+  schemas   = ["ekiden"]
 }
 
 model Athlete {
@@ -13,33 +15,35 @@ model Athlete {
   loginId         String?  @unique @map("login_id")
   password        String?  @map("password")
   role            String   @default("player") @map("role")
-  name            String   @default("Athlete") // Added name field
+  name            String   @default("Athlete")
   birthDate       DateTime @map("birth_date")
-  historyAnemia   Boolean  @default(false) @map("history_anemia") // 貧血既往歴
+  historyAnemia   Boolean  @default(false) @map("history_anemia")
   baselineFerritin Float?  @map("baseline_ferritin")
 
   bloodTests      BloodTest[]
   dailyConditions DailyCondition[]
   trainingLoads   TrainingLoad[]
+  nutritionLogs   NutritionLog[]
 
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   @@map("athletes")
+  @@schema("ekiden")
 }
 
 model BloodTest {
   id          String   @id @default(uuid()) @map("test_id")
   athleteId   String   @map("user_id")
   date        DateTime
-  
-  hemoglobin  Float    @map("hemoglobin") // Hb (g/dL)
-  ferritin    Float    @map("ferritin")   // ng/mL
-  serumIron   Float?   @map("serum_iron") // Fe (μg/dL)
+
+  hemoglobin  Float    @map("hemoglobin")
+  ferritin    Float    @map("ferritin")
+  serumIron   Float?   @map("serum_iron")
   tibc        Float?   @map("tibc")
-  rbc         Float?   @map("rbc")        // 10^4/μL
-  hematocrit  Float?   @map("hematocrit") // %
-  cpk         Int?     @map("cpk")        // U/L
+  rbc         Float?   @map("rbc")
+  hematocrit  Float?   @map("hematocrit")
+  cpk         Int?     @map("cpk")
 
   athlete     Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
 
@@ -47,18 +51,19 @@ model BloodTest {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("blood_tests")
+  @@schema("ekiden")
 }
 
 model DailyCondition {
   id                String   @id @default(uuid()) @map("log_id")
   athleteId         String   @map("user_id")
   date              DateTime
-  
-  mensesStatus      Int      @default(0) @map("menses_status") // 0:なし, 1:あり, 2:不正出血
-  restingHeartRate  Int?     @map("resting_hr")   // bpm
-  sleepQuality      Int?     @map("sleep_quality") // 1-5
-  subjectiveFatigue Int?     @map("subjective_fatigue") // 0-100
-  morningWeight     Float?   @map("morning_weight") // kg
+
+  mensesStatus      Int      @default(0) @map("menses_status")
+  restingHeartRate  Int?     @map("resting_hr")
+  sleepQuality      Int?     @map("sleep_quality")
+  subjectiveFatigue Int?     @map("subjective_fatigue")
+  morningWeight     Float?   @map("morning_weight")
 
   athlete           Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
 
@@ -66,6 +71,7 @@ model DailyCondition {
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   @@map("daily_conditions")
+  @@schema("ekiden")
 }
 
 model TrainingLoad {
@@ -73,19 +79,20 @@ model TrainingLoad {
   athleteId         String   @map("user_id")
   date              DateTime
 
-  totalDistance     Float?   @map("total_dist") // km
+  totalDistance     Float?   @map("total_dist")
   trimp             Float?   @map("trimp")
-  rpeSession        Int?     @map("rpe_session") // 6-20
+  rpeSession        Int?     @map("rpe_session")
 
   athlete           Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
 
-  feedback          String?  @map("feedback")   // 選手の感想
+  feedback          String?  @map("feedback")
   comments          Comment[]
 
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   @@map("training_loads")
+  @@schema("ekiden")
 }
 
 model Comment {
@@ -93,13 +100,14 @@ model Comment {
   content           String
   authorName        String       @map("author_name")
   trainingLoadId    String       @map("load_id")
-  
+
   trainingLoad      TrainingLoad @relation(fields: [trainingLoadId], references: [id], onDelete: Cascade)
-  
+
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
 
   @@map("comments")
+  @@schema("ekiden")
 }
 
 model Notice {
@@ -108,19 +116,20 @@ model Notice {
   content   String
   author    String
   date      DateTime @default(now())
-  type      String   @default("normal") // "normal" | "important"
+  type      String   @default("normal")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("notices")
+  @@schema("ekiden")
 }
 
 model Schedule {
   id          String   @id @default(uuid()) @map("schedule_id")
   date        DateTime
   title       String
-  type        String   @default("practice") // practice, race, other
+  type        String   @default("practice")
   time        String?
   location    String?
   description String?
@@ -132,15 +141,16 @@ model Schedule {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("schedules")
+  @@schema("ekiden")
 }
 
 model TrainingMenu {
   id          String   @id @default(uuid()) @map("menu_id")
   date        DateTime
-  type        String   @default("practice") // lsd, jog, pace, interval, etc.
+  type        String   @default("practice")
   title       String
-  content     String?  // Detailed description / menu
-  time        String?  // 実施時間
+  content     String?
+  time        String?
   distance    String?
   targetTime  String?
   author      String   @default("coach")
@@ -149,4 +159,27 @@ model TrainingMenu {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("training_menus")
+  @@schema("ekiden")
+}
+
+model NutritionLog {
+  id                   String   @id @default(uuid()) @map("log_id")
+  athleteId            String   @map("user_id")
+  date                 DateTime
+  mealType             String   @map("meal_type")
+
+  ironFoodScore        Int      @map("iron_food_score")
+  carbohydrateScore    Int      @map("carbohydrate_score")
+  energyBalanceScore   Int      @map("energy_balance_score")
+
+  detectedFoodGroups   String?  @map("detected_food_groups")
+  notes                String?  @map("notes")
+
+  athlete              Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("nutrition_logs")
+  @@schema("ekiden")
 }
