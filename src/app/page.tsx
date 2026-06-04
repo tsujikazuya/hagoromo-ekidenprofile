@@ -24,6 +24,11 @@ export default async function Home() {
         redirect('/login');
     }
 
+    // Role-based redirect
+    if (session.role === 'coach') {
+        redirect('/staff');
+    }
+
     // 2. Fetch User Data
     const athlete = await prisma.athlete.findUnique({
         where: { id: session.userId },

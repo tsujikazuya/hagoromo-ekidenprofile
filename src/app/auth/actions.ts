@@ -18,12 +18,9 @@ export async function loginAction(formData: FormData) {
 
     let redirectUrl = ''
     try {
-        const user = await prisma.athlete.findFirst({
+        const user = await prisma.athlete.findUnique({
             where: { 
-                loginId: {
-                    equals: normalizedId,
-                    mode: 'insensitive'
-                }
+                loginId: normalizedId
             }
         })
 

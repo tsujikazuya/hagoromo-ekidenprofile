@@ -16,7 +16,7 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { name, birthDate, historyAnemia, baselineFerritin } = body;
+        const { name, birthDate, historyAnemia, baselineFerritin, role, loginId, password } = body;
 
         if (!name || !birthDate) {
             return NextResponse.json({ error: 'Name and Birth Date are required' }, { status: 400 });
@@ -28,6 +28,9 @@ export async function POST(request: Request) {
                 birthDate: new Date(birthDate),
                 historyAnemia: !!historyAnemia,
                 baselineFerritin: baselineFerritin ? parseFloat(baselineFerritin) : null,
+                role: role || 'player',
+                loginId: loginId || null,
+                password: password ? Buffer.from(password).toString('base64') : null,
             },
         });
 

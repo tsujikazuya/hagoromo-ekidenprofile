@@ -10,19 +10,25 @@ export function DeleteAthleteButton({ athleteId, athleteName, role = "player" }:
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
 
-    const handleDelete = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleDelete = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         e.stopPropagation();
         
         const targetName = role === "coach" ? "指導者" : "選手";
         if (window.confirm(`本当に「${athleteName}」を削除しますか？\nこの操作は元に戻せず、関連するすべての記録も削除されます。`)) {
             startTransition(async () => {
-                const res = await deleteAthlete(athleteId);
-                if (res?.success) {
-                    router.push('/staff');
-                    router.refresh();
-                } else {
-                    alert("削除に失敗しました: " + (res?.error || "不明なエラー"));
+                try {
+                    const res = await fetch(`/api/athletes/${athleteId}`, { method: 'DELETE' });
+                    const result = await res.json();
+                    
+                    if (res.ok && result.success) {
+                        router.push('/staff');
+                        router.refresh();
+                    } else {
+                        alert("削除に失敗しました: " + (result.error || "不明なエラー"));
+                    }
+                } catch (e) {
+                    alert("通信エラーにより削除できませんでした");
                 }
             });
         }

@@ -55,6 +55,14 @@ export default function RecordPage() {
         }
     };
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCoach, setIsCoach] = useState(false); // Mock role for demo
+    const [formAdvice, setFormAdvice] = useState<string>("");
+
+    // Date and Time State
+    const [recordDate, setRecordDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [recordTime, setRecordTime] = useState("");
+
     // オーバーラップ機能: 日付変更時に指導者のメニューを取得
     const [isLoadingMenu, setIsLoadingMenu] = useState(false);
     useEffect(() => {
@@ -74,7 +82,7 @@ export default function RecordPage() {
                                     const parsed = JSON.parse(menu.content);
                                     if (Array.isArray(parsed)) {
                                         // IDの衝突を防ぐために新しいIDを付与
-                                        const newBlocks = parsed.map(b => ({...b, id: Date.now().toString() + Math.random().toString()}));
+                                        const newBlocks = parsed.map((b: any) => ({...b, id: Date.now().toString() + Math.random().toString()}));
                                         allBlocks = [...allBlocks, ...newBlocks];
                                     }
                                 } catch(e) {}
@@ -104,14 +112,6 @@ export default function RecordPage() {
 
         fetchMenuForDate();
     }, [recordDate]);
-
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isCoach, setIsCoach] = useState(false); // Mock role for demo
-    const [formAdvice, setFormAdvice] = useState<string>("");
-
-    // Date and Time State
-    const [recordDate, setRecordDate] = useState(() => new Date().toISOString().split('T')[0]);
-    const [recordTime, setRecordTime] = useState("");
 
     // Video Analysis State
     const [isUploading, setIsUploading] = useState(false);

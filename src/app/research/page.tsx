@@ -12,56 +12,35 @@ import { StaffInputMockup } from '@/components/research/StaffInputMockup';
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { MealInputMockup } from '@/components/research/MealInputMockup';
+import { MealInput } from '@/components/research/MealInput';
 
 export default function ResearchPortal() {
     const [csvPreview, setCsvPreview] = useState<string>("");
     const [spssMode, setSpssMode] = useState<boolean>(false);
 
-    const handleGenerateValues = () => {
-        // 1. Athlete (Static)
-        const athlete: Athlete = {
-            athlete_id: "STU_001",
-            name: "Taro Hanako",
-            birth_year: 2004,
-            height_cm: 162.5,
-            body_weight_kg: 51.0,
-            notes: "High risk group"
-        };
-
-        // 2. BloodLab (Periodic: q3-4m)
-        const bloodLabs: BloodLab[] = [
-            { athlete_id: "STU_001", date: "2024-04-10", ferritin_ng_ml: 35, hemoglobin_g_dl: 13.5, serum_iron_ug_dl: 90 },
-            { athlete_id: "STU_001", date: "2024-07-15", ferritin_ng_ml: 18, hemoglobin_g_dl: 12.1, serum_iron_ug_dl: 45 },
-        ];
-
-        // 3. Nutrition (Periodic: Monthly)
-        const nutrition: NutritionReview[] = [
-            { athlete_id: "STU_001", date: "2024-04-15", energy_balance_score: 0, iron_food_intake_score: 1, carbohydrate_intake_score: 0, dietitian_comment: "Good" },
-            { athlete_id: "STU_001", date: "2024-05-15", energy_balance_score: -1, iron_food_intake_score: -1, carbohydrate_intake_score: -1, dietitian_comment: "Lack of energy" },
-        ];
-
-        // 4. Treadmill (Periodic: Monthly)
-        const treadmill: TreadmillTest[] = [
-            {
-                athlete_id: "STU_001", date: "2024-04-20", running_speed_kmh: 12.0,
-                avg_hr_bpm: 150, first_half_hr_bpm: 148, second_half_hr_bpm: 152, hr_drift_bpm: 4, rpe: 13
-            }
-        ];
-
-        // 5. DailyLog (Daily)
-        const dailyLogs: DailyLog[] = [
-            { athlete_id: "STU_001", date: "2024-04-10", training_distance_km: 12, training_duration_min: 60, rpe: 13, sleep_duration_h: 7.5, sleep_quality: 4, fatigue_level: 2, symptom_dizziness: false, symptom_breathlessness: false, symptom_leg_heaviness: false },
-            { athlete_id: "STU_001", date: "2024-04-11", training_distance_km: 16, training_duration_min: 80, rpe: 15, sleep_duration_h: 6.0, sleep_quality: 2, fatigue_level: 4, symptom_dizziness: true, symptom_breathlessness: false, symptom_leg_heaviness: true },
-            { athlete_id: "STU_001", date: "2024-07-15", training_distance_km: 10, training_duration_min: 50, rpe: 18, sleep_duration_h: 7.0, sleep_quality: 3, fatigue_level: 5, symptom_dizziness: true, symptom_breathlessness: true, symptom_leg_heaviness: true },
-        ];
-
-        // Use Export Logic with Toggle
-        const exportData = generateExportDataset(athlete, bloodLabs, dailyLogs, nutrition, treadmill);
-        // SPSS Mode: Use empty string "", R (Standard) Mode: Use "NA"
-        const missingVal = spssMode ? "" : "NA";
-        const csv = formatExportCSV(exportData, missingVal);
-        setCsvPreview(csv);
+    const handleGenerateValues = async () => {
+        try {
+            const response = await fetch('/api/research/export-data');
+            if (!response.ok) throw new Error('データの取得に失敗しました');
+            
+            const data = await response.json();
+            
+            // Use Export Logic with Toggle
+            const exportData = generateExportDataset(
+                data.athlete, 
+                data.bloodLabs, 
+                data.dailyLogs, 
+                data.nutrition, 
+                data.treadmill
+            );
+            
+            // SPSS Mode: Use empty string "", R (Standard) Mode: Use "NA"
+            const missingVal = spssMode ? "" : "NA";
+            const csv = formatExportCSV(exportData, missingVal);
+            setCsvPreview(csv);
+        } catch (err: any) {
+            alert(err.message);
+        }
     };
 
     return (
@@ -151,7 +130,7 @@ export default function ResearchPortal() {
                             </h3>
                             <div className="bg-gray-100 p-6 rounded-xl flex justify-center">
                                 <div className="w-full max-w-[350px]">
-                                    <MealInputMockup />
+                                    <MealInput />
                                 </div>
                             </div>
                             <div className="text-sm text-slate-600 space-y-2 mt-4">
