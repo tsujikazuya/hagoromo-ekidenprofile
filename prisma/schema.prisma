@@ -20,10 +20,11 @@ model Athlete {
   historyAnemia   Boolean  @default(false) @map("history_anemia")
   baselineFerritin Float?  @map("baseline_ferritin")
 
-  bloodTests      BloodTest[]
-  dailyConditions DailyCondition[]
-  trainingLoads   TrainingLoad[]
-  nutritionLogs   NutritionLog[]
+  bloodTests        BloodTest[]
+  dailyConditions   DailyCondition[]
+  trainingLoads     TrainingLoad[]
+  nutritionLogs     NutritionLog[]
+  inBodyMeasurements InBodyMeasurement[]
 
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -181,5 +182,39 @@ model NutritionLog {
   updatedAt            DateTime @updatedAt @map("updated_at")
 
   @@map("nutrition_logs")
+  @@schema("ekiden")
+}
+
+model InBodyMeasurement {
+  id                  String   @id @default(uuid()) @map("inbody_id")
+  athleteId           String   @map("user_id")
+  date                DateTime
+
+  // 基本体組成
+  weight              Float?   @map("weight")              // 体重 kg
+  skeletalMuscleMass  Float?   @map("skeletal_muscle_mass") // 骨格筋量 kg
+  bodyFatMass         Float?   @map("body_fat_mass")       // 体脂肪量 kg
+  bodyFatPercent      Float?   @map("body_fat_percent")    // 体脂肪率 %
+  bmi                 Float?   @map("bmi")
+  totalBodyWater      Float?   @map("total_body_water")    // 体水分量 L
+  proteinMass         Float?   @map("protein_mass")        // タンパク質 kg
+  mineralMass         Float?   @map("mineral_mass")        // 無機塩 kg
+  bmr                 Int?     @map("bmr")                 // 基礎代謝 kcal
+
+  // セグメント別筋肉量 (kg)
+  muscleRightArm      Float?   @map("muscle_right_arm")
+  muscleLeftArm       Float?   @map("muscle_left_arm")
+  muscleTrunk         Float?   @map("muscle_trunk")
+  muscleRightLeg      Float?   @map("muscle_right_leg")
+  muscleLeftLeg       Float?   @map("muscle_left_leg")
+
+  notes               String?  @map("notes")
+
+  athlete             Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("inbody_measurements")
   @@schema("ekiden")
 }

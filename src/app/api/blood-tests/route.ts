@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export async function DELETE(request: Request) {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
+
+    try {
+        await prisma.bloodTest.delete({ where: { id } });
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
+    }
+}
+
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const athleteId = searchParams.get('athleteId');

@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, FileText, Activity, Droplet, User, AlertCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Activity, Droplet, User, AlertCircle, Scale, Plus } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { DeleteAthleteButton } from "@/components/staff/DeleteAthleteButton";
 // 日付のフォーマットユーティリティ
 const formatDate = (dateStr: Date) => {
@@ -19,7 +20,7 @@ export default async function PlayerDetailsPage({ params }: { params: Promise<{ 
         include: {
             dailyConditions: {
                 orderBy: { date: 'desc' },
-                take: 7 // 直近7件
+                take: 7
             },
             trainingLoads: {
                 orderBy: { date: 'desc' },
@@ -27,7 +28,11 @@ export default async function PlayerDetailsPage({ params }: { params: Promise<{ 
             },
             bloodTests: {
                 orderBy: { date: 'desc' },
-                take: 3 // 直近3件
+                take: 5
+            },
+            inBodyMeasurements: {
+                orderBy: { date: 'desc' },
+                take: 5
             }
         }
     });
@@ -155,10 +160,15 @@ export default async function PlayerDetailsPage({ params }: { params: Promise<{ 
             {/* Blood Tests */}
             <Card className="shadow-sm border-0">
                 <CardHeader className="bg-red-50/30 border-b border-red-100/50 pb-4">
-                    <CardTitle className="text-lg flex items-center gap-2 text-red-800">
-                        <Droplet className="w-5 h-5 text-red-500 fill-red-500/20" />
-                         血液検査の記録 (直近3件)
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg flex items-center gap-2 text-red-800">
+                            <Droplet className="w-5 h-5 text-red-500 fill-red-500/20" />
+                            血液検査の記録 (直近5件)
+                        </CardTitle>
+                        <Button asChild size="sm" variant="outline" className="text-xs border-red-200 text-red-600 hover:bg-red-50">
+                            <Link href="/staff/medical"><Plus className="w-3 h-3 mr-1" />入力</Link>
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent className="p-0">
                     {athlete.bloodTests.length > 0 ? (
@@ -167,29 +177,118 @@ export default async function PlayerDetailsPage({ params }: { params: Promise<{ 
                                 <thead className="bg-slate-50 text-slate-500 border-b">
                                     <tr>
                                         <th className="px-4 py-3 font-medium">検査日</th>
-                                        <th className="px-4 py-3 font-medium">Hb (g/dL)</th>
-                                        <th className="px-4 py-3 font-medium">Ferritin (ng/mL)</th>
-                                        <th className="px-4 py-3 font-medium">Fe (μg/dL)</th>
+                                        <th className="px-4 py-3 font-medium">Hb</th>
+                                        <th className="px-4 py-3 font-medium">Ferritin</th>
+                                        <th className="px-4 py-3 font-medium">Fe</th>
+                                        <th className="px-4 py-3 font-medium">Ht</th>
+                                        <th className="px-4 py-3 font-medium">CPK</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {athlete.bloodTests.map(test => (
                                         <tr key={test.id} className="hover:bg-slate-50/50">
-                                            <td className="px-4 py-3 font-bold text-slate-700">{new Date(test.date).toLocaleDateString('ja-JP')}</td>
+                                            <td className="px-4 py-3 font-bold text-slate-700 whitespace-nowrap">{new Date(test.date).toLocaleDateString('ja-JP')}</td>
                                             <td className="px-4 py-3">
-                                                <span className={test.hemoglobin < 12 ? 'text-red-500 font-bold' : 'text-slate-700'}>{test.hemoglobin}</span>
+                                                <span className={test.hemoglobin < 12 ? 'text-red-600 font-bold' : 'text-slate-700'}>
+                                                    {test.hemoglobin}
+                                                    {test.hemoglobin < 12 && <AlertCircle className="inline w-3 h-3 ml-1 text-red-500" />}
+                                                </span>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <span className={test.ferritin < 30 ? 'text-red-500 font-bold' : 'text-slate-700'}>{test.ferritin}</span>
+                                                <span className={test.ferritin < 30 ? 'text-red-600 font-bold' : 'text-slate-700'}>
+                                                    {test.ferritin}
+                                                    {test.ferritin < 30 && <AlertCircle className="inline w-3 h-3 ml-1 text-red-500" />}
+                                                </span>
                                             </td>
-                                            <td className="px-4 py-3 text-slate-600">{test.serumIron ?? '-'}</td>
+                                            <td className="px-4 py-3 text-slate-600">{test.serumIron ?? <span className="text-slate-300">—</span>}</td>
+                                            <td className="px-4 py-3 text-slate-600">{test.hematocrit ?? <span className="text-slate-300">—</span>}</td>
+                                            <td className="px-4 py-3 text-slate-600">{test.cpk ?? <span className="text-slate-300">—</span>}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
                     ) : (
-                        <div className="p-8 text-center text-slate-400 text-sm">記録がありません</div>
+                        <div className="p-8 text-center space-y-3">
+                            <p className="text-slate-400 text-sm">記録がありません</p>
+                            <Button asChild size="sm" variant="outline" className="text-xs">
+                                <Link href="/staff/medical">血液検査データを入力する</Link>
+                            </Button>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* InBody Measurements */}
+            <Card className="shadow-sm border-0">
+                <CardHeader className="bg-blue-50/30 border-b border-blue-100/50 pb-4">
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg flex items-center gap-2 text-blue-800">
+                            <Scale className="w-5 h-5 text-blue-500" />
+                            インボディ測定記録 (直近5件)
+                        </CardTitle>
+                        <Button asChild size="sm" variant="outline" className="text-xs border-blue-200 text-blue-600 hover:bg-blue-50">
+                            <Link href="/staff/medical?tab=inbody"><Plus className="w-3 h-3 mr-1" />入力</Link>
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                    {athlete.inBodyMeasurements.length > 0 ? (
+                        <div className="divide-y divide-slate-100">
+                            {athlete.inBodyMeasurements.map(m => (
+                                <div key={m.id} className="p-4 hover:bg-slate-50/50">
+                                    <p className="text-sm font-bold text-slate-600 mb-3">{new Date(m.date).toLocaleDateString('ja-JP')}</p>
+                                    <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                                        {m.weight != null && (
+                                            <div className="bg-white border border-slate-100 rounded-lg p-2 text-center shadow-sm">
+                                                <p className="text-[9px] text-slate-400 font-bold">体重</p>
+                                                <p className="text-sm font-black text-slate-800">{m.weight}<span className="text-[9px] font-normal text-slate-400">kg</span></p>
+                                            </div>
+                                        )}
+                                        {m.skeletalMuscleMass != null && (
+                                            <div className="bg-blue-50 border border-blue-100 rounded-lg p-2 text-center shadow-sm">
+                                                <p className="text-[9px] text-blue-500 font-bold">骨格筋量</p>
+                                                <p className="text-sm font-black text-blue-700">{m.skeletalMuscleMass}<span className="text-[9px] font-normal text-blue-400">kg</span></p>
+                                            </div>
+                                        )}
+                                        {m.bodyFatPercent != null && (
+                                            <div className={`border rounded-lg p-2 text-center shadow-sm ${m.bodyFatPercent < 10 ? 'bg-orange-50 border-orange-100' : 'bg-white border-slate-100'}`}>
+                                                <p className="text-[9px] text-slate-400 font-bold">体脂肪率</p>
+                                                <p className={`text-sm font-black ${m.bodyFatPercent < 10 ? 'text-orange-600' : 'text-slate-800'}`}>
+                                                    {m.bodyFatPercent}<span className="text-[9px] font-normal text-slate-400">%</span>
+                                                </p>
+                                            </div>
+                                        )}
+                                        {m.bodyFatMass != null && (
+                                            <div className="bg-white border border-slate-100 rounded-lg p-2 text-center shadow-sm">
+                                                <p className="text-[9px] text-slate-400 font-bold">体脂肪量</p>
+                                                <p className="text-sm font-black text-slate-800">{m.bodyFatMass}<span className="text-[9px] font-normal text-slate-400">kg</span></p>
+                                            </div>
+                                        )}
+                                        {m.bmi != null && (
+                                            <div className="bg-white border border-slate-100 rounded-lg p-2 text-center shadow-sm">
+                                                <p className="text-[9px] text-slate-400 font-bold">BMI</p>
+                                                <p className="text-sm font-black text-slate-800">{m.bmi}</p>
+                                            </div>
+                                        )}
+                                        {m.bmr != null && (
+                                            <div className="bg-white border border-slate-100 rounded-lg p-2 text-center shadow-sm">
+                                                <p className="text-[9px] text-slate-400 font-bold">基礎代謝</p>
+                                                <p className="text-sm font-black text-slate-800">{m.bmr}<span className="text-[9px] font-normal text-slate-400">kcal</span></p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {m.notes && <p className="text-xs text-slate-400 mt-2 italic">「{m.notes}」</p>}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="p-8 text-center space-y-3">
+                            <p className="text-slate-400 text-sm">記録がありません</p>
+                            <Button asChild size="sm" variant="outline" className="text-xs">
+                                <Link href="/staff/medical">インボディデータを入力する</Link>
+                            </Button>
+                        </div>
                     )}
                 </CardContent>
             </Card>

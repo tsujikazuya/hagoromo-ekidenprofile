@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { AlertCircle, CheckCircle2, ChevronRight, Users, AlertTriangle, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, CheckCircle2, ChevronRight, Users, AlertTriangle, FileText, Droplet, Scale } from "lucide-react";
 import Link from "next/link";
 import { StaffInputMockup } from '@/components/research/StaffInputMockup';
 
@@ -63,6 +64,20 @@ export default function StaffDashboard() {
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-800">専門スタッフ・指導者用ダッシュボード</h1>
                     <p className="text-sm text-slate-500 mt-1">チーム状況の俯瞰および専門データの入力・管理</p>
+                </div>
+                <div className="flex gap-2">
+                    <Button variant="outline" className="shadow-sm gap-2" asChild>
+                        <Link href="/staff/medical">
+                            <Droplet className="w-4 h-4 text-red-500" />
+                            医療データ入力
+                        </Link>
+                    </Button>
+                    <Button variant="outline" className="shadow-sm gap-2" asChild>
+                        <Link href="/staff/members">
+                            <Users className="w-4 h-4" />
+                            メンバー管理
+                        </Link>
+                    </Button>
                 </div>
             </div>
 
